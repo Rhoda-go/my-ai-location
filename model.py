@@ -1,3 +1,4 @@
+
 import torch
 import torch.nn as nn
 import torch_geometric
@@ -91,7 +92,7 @@ class ActorCritic(nn.Module):
         )
         self.critic = MLP(emb_size, c_hidden, 1, num_layers)
 
-    def actor_forward(self, state, action1=None):
+    def actor_forward(self, state, tabu_table, action1=None):
         batch_fac, mask = state["fac_data"], state["mask"]
         batch = batch_fac.batch
         if batch is None:
@@ -119,7 +120,24 @@ class ActorCritic(nn.Module):
         act_scores2 = torch.matmul(emb_fac, feat_act.T)
         act_scores2 = act_scores2[torch.arange(act_scores2.shape[0]), batch]
         act_scores2 = act_scores2.reshape(pooling.shape[0], -1)
-        mask2 = torch.where(mask, 0, -float("inf"))
+        
+        mask_tabu=(tabu_table == 1)        
+        mask2 = copy.deepcopy(mask)
+        candidate_indices = torch.where(mask2 == 0)[0]
+      
+        if len(candidate_indices) > 0:
+            for idx in candidate_indices:
+                tabu_row = mask_tabu[idx]  # 获取该选址点的选址规则
+                
+                # 将选址规则转换为数值掩码
+                # 你的逻辑：tabu_row=True表示可以选址→0，False表示不可以选址→-inf
+                temp_mask = torch.where(tabu_row, 0, -float("inf"))
+                
+                # AND逻辑合并：只有两个掩码都是0的位置才保持为0（可以选址）
+                # 使用torch.maximum实现，因为0 > -inf
+                mask2 = torch.maximum(mask2, temp_mask)
+                print(f"选址点 {idx} 处理后mask2: {mask2}")
+      
         logits2 = act_scores2 + mask2
         pi2 = Categorical(logits=logits2)
         action2 = pi2.sample()
@@ -450,4 +468,3 @@ class PPOLightning(LightningModule):
 
     def train_dataloader(self) -> DataLoader:
         return self._dataloader()
-

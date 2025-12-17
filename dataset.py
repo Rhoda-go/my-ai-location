@@ -1,3 +1,4 @@
+
 import os
 import pickle
 
@@ -8,7 +9,7 @@ import torch_geometric.data as geom_data
 from torch.utils.data import Dataset
 
 
-def preprocess_graph(graph, distance_m):
+def preprocess_graph(graph, distance_m, alpha, beta):
     # coordinates normalized to [0,1]^2; edges and dist are scaled to [0, 1]
     # city_pop are not scaled (for computing obj.); solvers should normalize by themselves
 
@@ -31,8 +32,11 @@ def preprocess_graph(graph, distance_m):
     edge_attr = edge_attr.reshape(-1, 1) / edge_attr.max()  # [m, 1]
     road_net_data = geom_data.Data(edge_index=edge_index, edge_attr=edge_attr)
     distance_m = distance_m / distance_m.max()
+    alpha=alpha / alpha.max()
+    beta=beta / beta.max()
 
-    return (coordinates, road_net_data, distance_m, city_pop)
+
+    return (coordinates, road_net_data, distance_m, city_pop, alpha, beta)
 
 
 class GraphDataset(Dataset):
@@ -47,15 +51,29 @@ class GraphDataset(Dataset):
         self.coordinates = []
         self.road_net_data = []
 
+        self.alpha=[]
+        self.beta=[]
+        self.tabu_table=[]
+
         for i in range(self.city_num):
             G = pickle.load(open(f"{data_path}/{i}/graph.pkl", "rb"))
             distance_m_i = torch.Tensor(pickle.load(open(f"{data_path}/{i}/distance_m.pkl", "rb"))) 
-            (coordinates, road_net_data, distance_m_i, city_pop) = preprocess_graph(G, distance_m_i)
+            tabu_table= torch.Tensor(pickle.load(open(f"{data_path}/{i}/tabu_table.pkl", "rb"))).long()
+            
+            attr_params = pickle.load(open(f"{data_path}/{i}/attraction_params.pkl", "rb"))
+            alpha_i = torch.Tensor(attr_params["alpha"])
+            beta_i = torch.Tensor(attr_params["beta"])
+
+            (coordinates, road_net_data, distance_m_i, city_pop, alpha_i, beta_i) = preprocess_graph(G, distance_m_i, alpha_i, beta_i)
 
             self.city_pops.append(city_pop)
             self.distance_m.append(distance_m_i)
             self.coordinates.append(coordinates)
             self.road_net_data.append(road_net_data)
+            self.alpha.append(alpha_i)
+            self.beta.append(beta_i)
+            self.tabu_table.append(tabu_table)
+
 
     def __len__(self):
         return self.city_num * len(self.p)
@@ -70,6 +88,9 @@ class GraphDataset(Dataset):
             self.distance_m[city_id].clone(),
             self.coordinates[city_id].clone(),
             self.road_net_data[city_id].clone(),
+            self.alpha[city_id].clone(),
+            self.beta[city_id].clone(),
+            self.tabu_table[city_id].clone()
         )
 
 
@@ -87,6 +108,9 @@ class GraphImpDataset(GraphDataset):
             distance_m,
             coordinates,
             road_net_data,
+            alpha,
+            beta,
+            tabu_table
         ) = super().__getitem__(index)
 
         if os.path.isfile(f"{self.init_dir}/{city_id}_{p}.pkl"):
@@ -109,6 +133,9 @@ class GraphImpDataset(GraphDataset):
             distance_m,
             coordinates,
             road_net_data,
+            alpha,
+            beta,
+            tabu_table,
             init_facility.copy(),
         )
 

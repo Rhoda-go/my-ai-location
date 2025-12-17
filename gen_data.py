@@ -87,11 +87,55 @@ def gen_gabriel_graph(data_path, seed, n, k1=3, k2=6):
         )
     for i, pop in enumerate(city_pop):
         G.nodes[i]["pop"] = pop
+        
+        
+    # Generate attraction parameters
+    alpha = np.random.uniform(0.0, 0.5, n)  # initial basic coefficient
+    # centrality_normalized = np.array(list(eigenvector_centrality.values())) / max(eigenvector_centrality.values())
+    # alpha = alpha * (1+0.2 * centrality_normalized) #alpha bigger in more centralized area
 
+    beta = np.random.normal(1.0, 0.3, n)  # initial decay coefficient
+    beta = np.clip(beta, 0.2, 2.5)
+    # pop_normalized = city_pop / city_pop.max()
+    # beta = beta * (1 + 0.1 * pop_normalized)  #beta bigger in an area with more population
+
+    for i in range(n):
+        G.nodes[i]["alpha"] = alpha[i]
+        G.nodes[i]["beta"] = beta[i]
+
+        attraction_params = {
+            "alpha": alpha,
+            "beta": beta,
+            "node_indices": np.arange(n)
+        }
+
+
+    tabu_table = np.ones((n, n), dtype=int)
+
+    for k in range(n):
+        for i in range(n):
+            if i == k:
+                continue  #  
+            d_ki= distance_m[k][i] 
+            condition1 = alpha[k] > alpha[i] * np.exp(beta[k] * d_ki)
+            condition2 = beta[k] <= beta[i]
+         
+            if condition1 and condition2:
+                tabu_table[k][i] = 0
+
+
+    pickle.dump(tabu_table, open(f"{data_path}/tabu_table.pkl", "wb"))
+
+    pickle.dump(attraction_params, open(f"{data_path}/attraction_params.pkl", "wb"))
     pickle.dump(G, open(f"{data_path}/graph.pkl", "wb"))
     pickle.dump(distance_m, open(f"{data_path}/distance_m.pkl", "wb"))
 
-    return city_pop, distance_m, nodes
+    return city_pop, distance_m, nodes, alpha, beta, tabu_table
+        
+        
+    
+
+  
 
 
 def batch_gen(data_path: str, n: int, graph_num: int):
@@ -110,3 +154,4 @@ def batch_gen(data_path: str, n: int, graph_num: int):
 if __name__ == "__main__":
     batch_gen("./data/train_100_1000/", 100, 1000)
     batch_gen("./data/test_100_10/", 100, 10)
+
