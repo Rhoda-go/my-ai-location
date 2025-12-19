@@ -1,5 +1,6 @@
 
 import torch
+import numpy as np
 import torch_geometric.data as geom_data
 
 from dataset import GraphImpDataset
@@ -26,38 +27,43 @@ class SwapEnv:
         self.total_pop = None
         self.init_cost = None
         self.static_feat = None
+        self.alpha=None
+        self.beta=None
+        self.tabu_table=None
+
 
         self.facility_list = None
         self.mask = None
 
     def _get_fac_data(self):
-        wdist = self.distance_m[self.facility_list] * self.city_pop
-        point_indices = torch.argmin(self.distance_m[self.facility_list], 0)
-        node_costs = wdist[point_indices, torch.arange(self.distance_m.shape[1])]
-        self.total_cost = torch.sum(node_costs)
+        wdist = self.alpha* np.exp(-self.beta * self.distance_m[self.facility_list]) * self.city_pop
+        #point_indices = torch.argmin(self.distance_m[self.facility_list], 0)
+        #node_costs = wdist[point_indices, torch.arange(self.distance_m.shape[1])]
+        node_costs = torch.sum(wdist, dim=0)  #facility to all nodes
+        self.total_cost = torch.sum(node_costs)  #objective value
 
-        fac_costs = torch.zeros(self.p, device=wdist.device)
-        fac_pop = torch.zeros(self.p, device=self.city_pop.device)
+        #fac_costs = torch.zeros(self.p, device=wdist.device) #delete
+        #fac_pop = torch.zeros(self.p, device=self.city_pop.device)
 
-        fac_costs.scatter_add_(0, point_indices, node_costs)
-        fac_pop.scatter_add_(0, point_indices, self.city_pop)
+        #fac_costs.scatter_add_(0, point_indices, node_costs)
+        #fac_pop.scatter_add_(0, point_indices, self.city_pop)
 
-        fac_feat = torch.cat(
-            (
-                fac_pop.reshape(-1, 1) / torch.max(fac_pop),
-                fac_costs.reshape(-1, 1) / torch.max(fac_costs),
-            ),
-            axis=1,
-        )
-        node_fac_feat = torch.zeros((self.city_pop.shape[0], fac_feat.shape[1]))
-        node_fac_feat[self.facility_list] = fac_feat
+        # #fac_feat = torch.cat(
+        #     (
+        #         fac_pop.reshape(-1, 1) / torch.max(fac_pop),
+        #         fac_costs.reshape(-1, 1) / torch.max(fac_costs),
+        #     ),
+        #     axis=1,
+        # )
+        # node_fac_feat = torch.zeros((self.city_pop.shape[0], fac_feat.shape[1]))
+        # node_fac_feat[self.facility_list] = fac_feat
 
         node_feat = torch.cat(
             (
                 self.static_feat,
                 self.mask.reshape(-1, 1),
                 node_costs.reshape(-1, 1) / torch.max(node_costs),
-                node_fac_feat,
+                #node_fac_feat,
             ),
             axis=1,
         )
@@ -91,6 +97,8 @@ class SwapEnv:
             self.coordinates,
             self.road_net_data,
             self.facility_list,
+            self.alpha,
+            self.beta,
             self.tabu_table
         ) = self._dataset[self._index]
 
@@ -99,6 +107,9 @@ class SwapEnv:
             (
                 self.coordinates,
                 self.city_pop.reshape(-1, 1) / torch.max(self.city_pop),
+                self.alpha.reshape(-1, 1) / torch.max(self.alpha),
+                self.beta.reshape(-1, 1) / torch.max(self.beta),
+
             ),
             axis=1,
         )
@@ -135,6 +146,6 @@ class SwapEnv:
         done = False
         observation = self._get_obs()
         info = self._get_info()
-        reward = (pre_cost - self.total_cost) / self.init_cost
+        reward = (self.total_cost-pre_cost) / self.init_cost   #delta increasing population
 
         return observation, reward, done, truncated, info

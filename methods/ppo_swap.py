@@ -50,33 +50,35 @@ class PPOSwapSolver(SwapSolver):
         facility_list,
         static_feat,
         road_net_data,
+        alpha,
+        beta,
         mask,
     ):
 
-        wdist = distance_m[facility_list] * city_pop
-        point_indices = torch.argmin(distance_m[facility_list], 0)
-        node_costs = wdist[point_indices, torch.arange(distance_m.shape[1])]
-        total_cost = torch.sum(node_costs)
+        wdist = alpha* np.exp(-beta * distance_m[facility_list]) * city_pop
+        #point_indices = torch.argmin(distance_m[facility_list], 0)
+        node_costs = torch.sum(wdist, dim=0)  #facility to all nodes
+        total_cost = torch.sum(node_costs)  #objective value
 
-        fac_costs = torch.zeros(p, device=wdist.device)
-        fac_pop = torch.zeros(p, device=city_pop.device)
+        # fac_costs = torch.zeros(p, device=wdist.device)
+        # fac_pop = torch.zeros(p, device=city_pop.device)
 
-        fac_costs.scatter_add_(0, point_indices, node_costs)
-        fac_pop.scatter_add_(0, point_indices, city_pop)
+        # fac_costs.scatter_add_(0, point_indices, node_costs)
+        # fac_pop.scatter_add_(0, point_indices, city_pop)
 
-        fac_feat = torch.cat(
-            (
-                # fac_pop.reshape(-1, 1) / torch.sum(city_pop),
-                # fac_costs.reshape(-1, 1) / total_cost,
-                fac_pop.reshape(-1, 1) / torch.max(fac_pop),
-                fac_costs.reshape(-1, 1) / torch.max(fac_costs),
-            ),
-            axis=1,
-        )
-        node_fac_feat = torch.zeros(
-            (city_pop.shape[0], fac_feat.shape[1]), device=self.device
-        )
-        node_fac_feat[facility_list] = fac_feat
+        # fac_feat = torch.cat(
+        #     (
+        #         # fac_pop.reshape(-1, 1) / torch.sum(city_pop),
+        #         # fac_costs.reshape(-1, 1) / total_cost,
+        #         fac_pop.reshape(-1, 1) / torch.max(fac_pop),
+        #         fac_costs.reshape(-1, 1) / torch.max(fac_costs),
+        #     ),
+        #     axis=1,
+        # )
+        # node_fac_feat = torch.zeros(
+        #     (city_pop.shape[0], fac_feat.shape[1]), device=self.device
+        # )
+        # node_fac_feat[facility_list] = fac_feat
 
         node_feat = torch.cat(
             (
@@ -84,7 +86,7 @@ class PPOSwapSolver(SwapSolver):
                 mask.reshape(-1, 1),
                 # node_costs.reshape(-1, 1) / total_cost,
                 node_costs.reshape(-1, 1) / torch.max(node_costs),
-                node_fac_feat,
+                #node_fac_feat,
             ),
             axis=1,
         )
@@ -97,12 +99,14 @@ class PPOSwapSolver(SwapSolver):
 
         return fac_data, total_cost
 
-    def solve_reloc(self, city_pop, p, distance_m, facility_list, tabu_table, reloc_step, **kwargs):
+    def solve_reloc(self, city_pop, p, distance_m, facility_list, tabu_table,alpha,beta,reloc_step, **kwargs):
 
         start = time.time()
         best_sol = None
         city_pop = city_pop.to(self.device)
         distance_m = distance_m.to(self.device)
+        alpha = alpha.to(self.device)
+        beta = beta.to(self.device)
         coordinates = kwargs["coordinates"].to(self.device)
         road_net_data = kwargs["road_net_data"].to(self.device)
         coordinates_norm = (coordinates - torch.min(coordinates, 0)[0]) / max(
@@ -111,6 +115,8 @@ class PPOSwapSolver(SwapSolver):
         static_feat = torch.cat(
             # (coordinates_norm, city_pop.reshape(-1, 1) / torch.sum(city_pop)),
             (coordinates_norm, city_pop.reshape(-1, 1) / torch.max(city_pop)),
+             alpha.reshape(-1, 1) / torch.max(alpha),beta.reshape(-1, 1) / torch.max(beta),
+
             axis=1
         )
         facility_lists = np.tile(facility_list, (self.iter_num, 1))
@@ -130,6 +136,8 @@ class PPOSwapSolver(SwapSolver):
                     static_feat,
                     road_net_data,
                     tabu_table,
+                    alpha,
+                    beta,
                     masks[i],
                 )
                 fac_data_list.append(fac_data)

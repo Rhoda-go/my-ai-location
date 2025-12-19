@@ -93,8 +93,8 @@ class ActorCritic(nn.Module):
         )
         self.critic = MLP(emb_size, c_hidden, 1, num_layers)
 
-    def actor_forward(self, state, tabu_table, action1=None):
-        batch_fac, mask = state["fac_data"], state["mask"]
+    def actor_forward(self, state, action1=None):
+        batch_fac, mask, tabu_table = state["fac_data"], state["mask"], state["tabu_table"]
         batch = batch_fac.batch
         if batch is None:
             batch = torch.zeros(

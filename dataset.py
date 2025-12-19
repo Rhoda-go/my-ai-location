@@ -9,7 +9,7 @@ import torch_geometric.data as geom_data
 from torch.utils.data import Dataset
 
 
-def preprocess_graph(graph, distance_m, alpha, beta):
+def preprocess_graph(graph, distance_m):
     # coordinates normalized to [0,1]^2; edges and dist are scaled to [0, 1]
     # city_pop are not scaled (for computing obj.); solvers should normalize by themselves
 
@@ -32,11 +32,10 @@ def preprocess_graph(graph, distance_m, alpha, beta):
     edge_attr = edge_attr.reshape(-1, 1) / edge_attr.max()  # [m, 1]
     road_net_data = geom_data.Data(edge_index=edge_index, edge_attr=edge_attr)
     distance_m = distance_m / distance_m.max()
-    alpha=alpha / alpha.max()
-    beta=beta / beta.max()
+  
 
 
-    return (coordinates, road_net_data, distance_m, city_pop, alpha, beta)
+    return (coordinates, road_net_data, distance_m, city_pop)
 
 
 class GraphDataset(Dataset):
@@ -64,7 +63,7 @@ class GraphDataset(Dataset):
             alpha_i = torch.Tensor(attr_params["alpha"])
             beta_i = torch.Tensor(attr_params["beta"])
 
-            (coordinates, road_net_data, distance_m_i, city_pop, alpha_i, beta_i) = preprocess_graph(G, distance_m_i, alpha_i, beta_i)
+            (coordinates, road_net_data, distance_m_i, city_pop) = preprocess_graph(G, distance_m_i)
 
             self.city_pops.append(city_pop)
             self.distance_m.append(distance_m_i)
