@@ -4,7 +4,7 @@ import torch_geometric.data as geom_data
 
 from dataset import GraphImpDataset
 from utils import DensitySampling
-
+from utils import TabuDensitySampling
 
 class SwapEnv:
     def __init__(
@@ -91,6 +91,7 @@ class SwapEnv:
             self.coordinates,
             self.road_net_data,
             self.facility_list,
+            self.tabu_table
         ) = self._dataset[self._index]
 
         self.total_pop = torch.sum(self.city_pop)
@@ -103,11 +104,12 @@ class SwapEnv:
         )
 
         self._steps = 0
-        self.facility_list = DensitySampling(1).sample(self.city_pop, self.p)
+        #self.facility_list = DensitySampling(1).sample(self.city_pop, self.p)
+        self.facility_list = TabuDensitySampling(exp=1).sample(self.city_pop, self.p, self.tabu_table)
         self.mask = torch.ones(self.city_pop.shape[0], dtype=torch.bool)
         self.mask[self.facility_list] = 0
 
-        observation = self._get_obs()
+        observation = self._get_obs() 
         info = self._get_info()
         self.init_cost = self.total_cost
 

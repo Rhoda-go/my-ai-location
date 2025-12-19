@@ -1,5 +1,6 @@
 
 import torch
+import copy
 import torch.nn as nn
 import torch_geometric
 import torch_geometric.nn as geom_nn
@@ -121,24 +122,17 @@ class ActorCritic(nn.Module):
         act_scores2 = act_scores2[torch.arange(act_scores2.shape[0]), batch]
         act_scores2 = act_scores2.reshape(pooling.shape[0], -1)
         
-        mask_tabu=(tabu_table == 1)        
+        mask_tabu=(tabu_table == 1)      # torch.bool 
         mask2 = copy.deepcopy(mask)
-        candidate_indices = torch.where(mask2 == 0)[0]
+        candidate_indices = torch.where(mask2 == 0)[0]  # selected location index
       
         if len(candidate_indices) > 0:
             for idx in candidate_indices:
-                tabu_row = mask_tabu[idx]  # 获取该选址点的选址规则
+                tabu_row = mask_tabu[idx] 
+                mask2 = mask2 & tabu_row  #true&true=true，true&false=false
                 
-                # 将选址规则转换为数值掩码
-                # 你的逻辑：tabu_row=True表示可以选址→0，False表示不可以选址→-inf
-                temp_mask = torch.where(tabu_row, 0, -float("inf"))
-                
-                # AND逻辑合并：只有两个掩码都是0的位置才保持为0（可以选址）
-                # 使用torch.maximum实现，因为0 > -inf
-                mask2 = torch.maximum(mask2, temp_mask)
-                print(f"选址点 {idx} 处理后mask2: {mask2}")
-      
-        logits2 = act_scores2 + mask2
+        logits_mask = torch.where(mask2, 0, -float("inf"))
+        logits2 = act_scores2 + logits_mask
         pi2 = Categorical(logits=logits2)
         action2 = pi2.sample()
 

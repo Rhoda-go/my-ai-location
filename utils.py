@@ -1,3 +1,5 @@
+
+
 import argparse
 
 import numpy as np
@@ -32,7 +34,7 @@ def to_device(state: dict, device):
     return state
 
 
-# def get_cost(facility_list, distance_m, city_pop, alpha, beta):
+# def get_cost(facility_list, distance_m, city_pop):
 #     total_cost = torch.sum(
 #         (distance_m[facility_list] * city_pop.flatten())[
 #             torch.argmin(distance_m[facility_list], axis=0),
@@ -41,43 +43,24 @@ def to_device(state: dict, device):
 #     )
 #     return total_cost
 
-# def get_cost(facility_list, distance_m, city_pop, alpha, beta):
-#     """
-#     计算总成本：所有选址点到所有需求点的距离×人口数（可加alpha/beta衰减）
-#     参数说明同场景1
-#     """
- 
-#     facility_tensor = torch.tensor(facility_list, dtype=torch.long) if not isinstance(facility_list, torch.Tensor) else facility_list
-#       # [n_fac, n_node]
-
-#     total_cost = 0.0
-#     for fac in facility_list:
-#         dist_from_facility = distance_m[facility_tensor, :]
-#         decayed = alpha * torch.exp(- beta * dist_from_facility)  
-#         cost = torch.sum(decayed * city_pop.flatten())  # 单个选址点的成本
-#         total_cost += cost
-
-#     return total_cost
 
 def get_cost(facility_list, distance_m, city_pop, alpha, beta):
-   
-  
-    facility_tensor = torch.tensor(facility_list, dtype=torch.long) if not isinstance(facility_list, torch.Tensor) else facility_list
-    n_fac = facility_tensor.shape[0]  # 选址点数量
-    n_node = distance_m.shape[1]     # 需求点数量
+ 
 
-    dist_from_facility = distance_m[facility_tensor, :]
+  
+    dist_from_facility = distance_m[facility_list, :]
 
 
     cost_matrix = (
         alpha.unsqueeze(0)  # [n_fac, n_node]
         * torch.exp(-beta.unsqueeze(0) * dist_from_facility)  # e^(-beta×dist)
-        * city_pop.flatten().unsqueeze(0)  # [n_fac, n_node]
+        * city_pop.flatten().unsqueeze(0)  #[n_fac, n_node]
     )
+
+
     total_cost = torch.sum(cost_matrix)
 
     return total_cost
-
 
 
 
@@ -92,3 +75,49 @@ class DensitySampling:
             city_pop.numel(), size=p, p=density, replace=False
         )
         return facility_list
+    
+
+class TabuDensitySampling:        #initial with tabu_table
+    def __init__(self, exp):
+
+        self.exp = exp
+
+    def sample(self, city_pop, p, tabu_table):
+
+        city_pop_np = np.reshape(np.array(city_pop), -1)
+
+        tabu_table_np = np.array(tabu_table, dtype=int)
+    
+
+
+        facility_list = []  
+        available_nodes = np.arange(city_pop_np)
+
+       
+        while len(facility_list) < p and len(available_nodes) > 0:
+     
+            pop_available = city_pop_np[available_nodes]
+          
+            density = pop_available ** self.exp
+            density_sum = np.sum(density)
+            density = density / density_sum
+
+      
+            selected = np.random.choice(available_nodes, size=1, p=density, replace=False)[0]
+            facility_list.append(selected)
+
+            tabu_nodes = np.where(tabu_table_np[selected] == 0)[0]  #==0 as true
+       
+            available_nodes = np.array([
+                node for node in available_nodes
+                if node not in facility_list and node not in tabu_nodes
+            ])
+
+  
+        if len(facility_list) < p:
+            raise ValueError(f"just {len(facility_list)} nodes selected")
+
+    
+        return np.array(facility_list)
+
+

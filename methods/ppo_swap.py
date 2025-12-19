@@ -1,3 +1,4 @@
+
 import os
 import pickle
 import time
@@ -96,7 +97,7 @@ class PPOSwapSolver(SwapSolver):
 
         return fac_data, total_cost
 
-    def solve_reloc(self, city_pop, p, distance_m, facility_list, reloc_step, **kwargs):
+    def solve_reloc(self, city_pop, p, distance_m, facility_list, tabu_table, reloc_step, **kwargs):
 
         start = time.time()
         best_sol = None
@@ -128,6 +129,7 @@ class PPOSwapSolver(SwapSolver):
                     facility_lists[i],
                     static_feat,
                     road_net_data,
+                    tabu_table,
                     masks[i],
                 )
                 fac_data_list.append(fac_data)
@@ -141,9 +143,29 @@ class PPOSwapSolver(SwapSolver):
 
             with torch.no_grad():
                 action = self.model(state)[1].cpu().numpy()
+            filtered_facility_lists =[] 
+            fac_out = action[:, 0].astype(np.int64)  # int
+            fac_in = action[:, 1].astype(np.int64)  # int    
+            mask_tabu = (tabu_table == 1)  # shape: (n_nodes, n_nodes)
+            n_nodes=len(tabu_table[0])
+            
+            for row in range(self.iter_num):
+                idx = fac_out[row]
+                filtered_facility_lists.append(set(facility_lists[row]) -{idx})
 
-            fac_out = action[:, 0]
-            fac_in = action[:, 1]
+            
+            # iteration
+            for i in range(self.iter_num):
+                k_list = filtered_facility_lists[i]  
+                violate_tabu = False  # 
+                target_col = fac_in[i]  # fac_in[i] is checked           
+                for k in k_list:                 
+                    if not mask_tabu[k, target_col]:  # if not TRUE (tabu_table[k, target_col] == 0)
+                        violate_tabu = True      
+                        break  
+                if violate_tabu:
+                    valid_indices = list(set(range(n_nodes))-(set(facility_lists[i]) | {fac_in[i]}))
+                    fac_in[i] = np.random.choice(valid_indices)
 
             fac_out_index = np.where(facility_lists == fac_out[:, None])[1]
             facility_lists[np.arange(self.iter_num), fac_out_index] = fac_in

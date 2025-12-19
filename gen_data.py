@@ -155,3 +155,5 @@ if __name__ == "__main__":
     batch_gen("./data/train_100_1000/", 100, 1000)
     batch_gen("./data/test_100_10/", 100, 10)
 
+
+
