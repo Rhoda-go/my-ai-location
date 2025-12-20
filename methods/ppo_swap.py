@@ -115,7 +115,7 @@ class PPOSwapSolver(SwapSolver):
         static_feat = torch.cat(
             # (coordinates_norm, city_pop.reshape(-1, 1) / torch.sum(city_pop)),
             (coordinates_norm, city_pop.reshape(-1, 1) / torch.max(city_pop)),
-             alpha.reshape(-1, 1) / torch.max(alpha),beta.reshape(-1, 1) / torch.max(beta),
+             alpha.reshape(-1, 1) / torch.max(alpha), beta.reshape(-1, 1) / torch.max(beta),
 
             axis=1
         )
@@ -141,7 +141,7 @@ class PPOSwapSolver(SwapSolver):
                     masks[i],
                 )
                 fac_data_list.append(fac_data)
-                if best_sol is None or cost < best_sol.cost:
+                if best_sol is None or cost > best_sol.cost:
                     best_sol = PMPSolution(facility_lists[i], np.nan, cost)
 
             state = {
@@ -182,11 +182,12 @@ class PPOSwapSolver(SwapSolver):
             masks[np.arange(self.iter_num), fac_in] = False
 
         for i in range(self.iter_num):
-            wdist = distance_m[facility_lists[i]] * city_pop
-            point_indices = torch.argmin(distance_m[facility_lists[i]], 0)
-            cost = torch.sum(wdist[point_indices, torch.arange(distance_m.shape[1])])
+            wdist = alpha* np.exp(-beta * distance_m[facility_list]) * city_pop
+            #point_indices = torch.argmin(distance_m[facility_list], 0)
+            node_costs = torch.sum(wdist, dim=0)  #facility to all nodes
+            cost = torch.sum(node_costs)  #objective value
             assert(get_cost(facility_lists[i], distance_m, city_pop) == cost)
-            if best_sol is None or cost < best_sol.cost:
+            if best_sol is None or cost > best_sol.cost:
                 best_sol = PMPSolution(facility_lists[i], np.nan, cost)
 
         best_sol.time = time.time() - start
@@ -206,7 +207,7 @@ def run_ppo_swap(
 
     solver = PPOSwapSolver(iter_num, ckpt, device)
     for batch in dataset:
-        city_id, city_pop, p, distance_m, coordinates, road_net_data = batch[:6]
+        city_id, city_pop, p, distance_m, coordinates, road_net_data, alpha, beta, tabu_table = batch[:9]
         if not os.path.isfile(f"{sol_path}/{city_id}_{p}.pkl"):
             sol = solver.solve(
                 p,
@@ -214,6 +215,9 @@ def run_ppo_swap(
                 distance_m,
                 swap_num,
                 init_num,
+                tabu_table,
+                alpha,
+                beta,
                 coordinates=coordinates,
                 road_net_data=road_net_data,
             )
@@ -236,6 +240,9 @@ def run_ppo_swap_reloc(dataset, save_path, iter_num, ckpt, device, reloc_coef, *
             distance_m,
             coordinates,
             road_net_data,
+            alpha,
+            beta,
+            tabu_table,
             facility_list,
         ) = batch
         if not os.path.isfile(f"{sol_path}/{city_id}_{p}.pkl"):
@@ -244,10 +251,13 @@ def run_ppo_swap_reloc(dataset, save_path, iter_num, ckpt, device, reloc_coef, *
                 p,
                 distance_m,
                 facility_list,
+                tabu_table,
+                alpha,
+                beta,
                 int(reloc_coef * p),
                 coordinates=coordinates,
                 road_net_data=road_net_data,
             )
             pickle.dump(sol, open(f"{sol_path}/{city_id}_{p}.pkl", "wb"))
-
+            
     return sol_path

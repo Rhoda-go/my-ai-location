@@ -3,7 +3,7 @@ import pickle
 import time
 
 from results import PMPSolution
-from utils import DensitySampling, get_cost
+from utils import TabuDensitySampling, get_cost
 
 
 class SwapSolver:
@@ -13,17 +13,17 @@ class SwapSolver:
     def solve_reloc(self, *args, **kwargs):
         raise NotImplementedError
 
-    def solve(self, p, city_pop, distance_m, swap_num, init_num, **kwargs):
+    def solve(self, p, city_pop, distance_m, swap_num, init_num,tabu_table,alpha,beta, **kwargs):
         start = time.time()
         best_sol = None
         if swap_num is None:
             swap_num = p
         for _ in range(init_num):
-            facility_list = DensitySampling(1).sample(city_pop, p)
+            facility_list = TabuDensitySampling(exp=1).sample(city_pop, p, tabu_table)
             sol = self.solve_reloc(
-                city_pop, p, distance_m, facility_list, reloc_step=swap_num, **kwargs
+                city_pop, p, distance_m, facility_list, tabu_table,alpha,beta,reloc_step=swap_num, **kwargs
             )
-            if best_sol is None or sol.cost < best_sol.cost:
+            if best_sol is None or sol.cost > best_sol.cost:
                 best_sol = sol
         best_sol.time = time.time() - start
         return best_sol
