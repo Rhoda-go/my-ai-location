@@ -35,6 +35,19 @@ class GraphFeatureExtractor(nn.Module):
 
         gnn_layer = getattr(geom_nn, layer_name)
 
+        '''
+        根据ai修改的代码，增加1
+        '''
+        heads_supported_layers = ["GATConv", "GATv2Conv", "TransformerConv"]
+        use_heads = layer_name in heads_supported_layers and "heads" in kwargs
+        # 移除GraphConv不支持的参数（heads/edge_dim）
+        if not use_heads:
+            kwargs.pop("heads", None)
+            kwargs.pop("edge_dim", None)
+        # 取heads值（支持的层用配置的，不支持的层默认1）
+        heads = kwargs.get("heads", 1) if use_heads else 1   #到这
+
+
         layers = []
         in_channels, out_channels = c_in, c_hidden
         for _ in range(num_layers - 1):
@@ -42,7 +55,14 @@ class GraphFeatureExtractor(nn.Module):
                 gnn_layer(in_channels, out_channels, **kwargs),
                 nn.ReLU(inplace=True),
             ]
-            in_channels = c_hidden * kwargs["heads"]
+            #in_channels = c_hidden * kwargs["heads"]
+
+            '''
+            根据ai修改的代码，修改上一行
+            '''
+            in_channels = c_hidden * heads if use_heads else c_hidden
+
+
         layers += [gnn_layer(in_channels=in_channels, out_channels=c_out, **kwargs)]
 
         self.layers = nn.ModuleList(layers)
@@ -78,9 +98,25 @@ class ActorCritic(nn.Module):
         self, fac_c_in, c_hidden, c_out, num_layers, layer_name, **kwargs
     ) -> None:
         super().__init__()
-        if "heads" not in kwargs:
-            kwargs["heads"] = 1
-        emb_size = c_out * kwargs["heads"] * 2
+        '''
+        根据ai修改的代码，增加3
+        '''
+        heads_supported_layers = ["GATConv", "GATv2Conv", "TransformerConv"]
+        use_heads = layer_name in heads_supported_layers
+        if use_heads:
+        # 支持heads的层，默认补1
+            if "heads" not in kwargs:
+                kwargs["heads"] = 1
+            emb_size = c_out * kwargs["heads"] * 2
+        else:
+            # 不支持heads的层，强制删除参数，emb_size按heads=1计算
+            kwargs.pop("heads", None)
+            emb_size = c_out * 2  # 等价于c_out * 1 * 2  #到这，还原下面三行
+
+
+        # if "heads" not in kwargs:
+        #     kwargs["heads"] = 1
+        # emb_size = c_out * kwargs["heads"] * 2
 
         self.actor_gnn = GraphFeatureExtractor(
             fac_c_in, c_hidden, c_out, num_layers, layer_name, **kwargs

@@ -96,18 +96,22 @@ class SwapEnv:
             self.distance_m,
             self.coordinates,
             self.road_net_data,
-            self.facility_list,
             self.alpha,
             self.beta,
-            self.tabu_table
+            self.tabu_table,
+            self.facility_list,
         ) = self._dataset[self._index]
+        # print("alpha",self.alpha)
+        # print("beta",self.beta)
+        # print("coordinates",self.coordinates)
+        # print("city_pop",self.city_pop)
 
         self.total_pop = torch.sum(self.city_pop)
         self.static_feat = torch.cat(
             (
                 self.coordinates,
                 self.city_pop.reshape(-1, 1) / torch.max(self.city_pop),
-                self.alpha.reshape(-1, 1) / torch.max(self.alpha),
+                self.alpha.reshape(-1, 1) / torch.max(self.alpha) ,
                 self.beta.reshape(-1, 1) / torch.max(self.beta),
 
             ),

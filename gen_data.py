@@ -98,7 +98,7 @@ def gen_gabriel_graph(data_path, seed, n, k1=3, k2=6):
     # Generate attraction parameters
     alpha = np.random.uniform(0.0, 0.5, n)  # initial basic coefficient
     centrality_normalized = np.array(list(eigenvector_centrality.values())) / max(eigenvector_centrality.values())
-    alpha = alpha * (1+0.2 * centrality_normalized) #alpha bigger in more centralized area
+    alpha = alpha * (1+0.1 * centrality_normalized) #alpha bigger in more centralized area
 
     beta = np.random.normal(1.0, 0.3, n)  # initial decay coefficient
     beta = np.clip(beta, 0.2, 2.5)
@@ -158,10 +158,10 @@ def batch_gen(data_path: str, n: int, graph_num: int):
 
 
 if __name__ == "__main__":
-    # batch_gen("./data/train_100_1000/", 100, 1000)
-    # batch_gen("./data/test_100_10/", 100, 10)
-    batch_gen("./data/train_100_1000/", 30, 100)
-    batch_gen("./data/test_100_10/", 30, 10)
+    batch_gen("./data/train_30_100/", 30, 100)
+    batch_gen("./data/test_10_100/", 30, 10)
+    # batch_gen("./data/train_30_100/", 30, 100)
+    # batch_gen("./data/test_30_10/", 30, 10)
 
 
 

@@ -3,7 +3,7 @@ iter_num: &iter_num 20
 swap_num: &swap_num null
 device: &device cuda:0
 
-data_path: ./data/test_100_10/
+data_path: ./data/test_30_10/
 
 methods:
   Gurobi:
