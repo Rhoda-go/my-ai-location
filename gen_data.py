@@ -8,6 +8,9 @@ import numpy as np
 
 
 def gen_gabriel_graph(data_path, seed, n, k1=3, k2=6):
+
+    SCALE_FACTOR = 5.0  # 1×1→10km×10km
+
     class Edge:
         def __init__(self, start, end):
             self.start = start
@@ -40,6 +43,7 @@ def gen_gabriel_graph(data_path, seed, n, k1=3, k2=6):
     center = (0.5, 0.5)
     std = 0.15
     nodes = np.clip(np.random.normal(center, std, size=(n, 2)), 0, 1)
+    nodes = nodes * SCALE_FACTOR     # SCALE [0,1]->[0,10]
     eu_dist = np.linalg.norm(nodes[:, None, :] - nodes[None, :, :], axis=-1)
 
     intersector = EdgeIntersector()
@@ -52,7 +56,8 @@ def gen_gabriel_graph(data_path, seed, n, k1=3, k2=6):
             M = (nodes[i] + nodes[j]) / 2
             dist_k = np.linalg.norm(M - nodes, axis=1)
             if dist_k.min() >= np.linalg.norm(M - nodes[i]):
-                G.add_edge(i, j, length=eu_dist[i, j])
+                #G.add_edge(i, j, length=eu_dist[i, j])
+                G.add_edge(i, j, length=eu_dist[i, j] * SCALE_FACTOR) #SCALE
                 assert intersector.add_edge(Edge(nodes[i], nodes[j]))
 
     # Additional edges
@@ -63,7 +68,8 @@ def gen_gabriel_graph(data_path, seed, n, k1=3, k2=6):
         for j in indices:
             if j not in G.neighbors(i):
                 if intersector.add_edge(Edge(nodes[i], nodes[j])):
-                    G.add_edge(i, j, length=eu_dist[i, j])
+                    #G.add_edge(i, j, length=eu_dist[i, j])
+                    G.add_edge(i, j, length=eu_dist[i, j] * SCALE_FACTOR) #SCALE
 
     # Distance matrix
     p = dict(nx.shortest_path_length(G, weight="length"))
@@ -91,8 +97,8 @@ def gen_gabriel_graph(data_path, seed, n, k1=3, k2=6):
         
     # Generate attraction parameters
     alpha = np.random.uniform(0.0, 0.5, n)  # initial basic coefficient
-    # centrality_normalized = np.array(list(eigenvector_centrality.values())) / max(eigenvector_centrality.values())
-    # alpha = alpha * (1+0.2 * centrality_normalized) #alpha bigger in more centralized area
+    centrality_normalized = np.array(list(eigenvector_centrality.values())) / max(eigenvector_centrality.values())
+    alpha = alpha * (1+0.2 * centrality_normalized) #alpha bigger in more centralized area
 
     beta = np.random.normal(1.0, 0.3, n)  # initial decay coefficient
     beta = np.clip(beta, 0.2, 2.5)
@@ -152,8 +158,10 @@ def batch_gen(data_path: str, n: int, graph_num: int):
 
 
 if __name__ == "__main__":
-    batch_gen("./data/train_100_1000/", 100, 1000)
-    batch_gen("./data/test_100_10/", 100, 10)
+    # batch_gen("./data/train_100_1000/", 100, 1000)
+    # batch_gen("./data/test_100_10/", 100, 10)
+    batch_gen("./data/train_100_1000/", 30, 100)
+    batch_gen("./data/test_100_10/", 30, 10)
 
 
 
