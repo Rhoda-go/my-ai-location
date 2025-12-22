@@ -19,7 +19,7 @@ ppo:
         layer_name: GraphConv
         #edge_dim: 1
         #heads: 1
-    data_path: ./data/train_30_100/
+    data_path: ./data/train_20_100/
 
 ppo_trainer:
     max_epochs: 300

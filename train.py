@@ -1,5 +1,6 @@
 import os
 import time
+import torch
 
 import yaml
 from pytorch_lightning import Trainer
@@ -9,6 +10,8 @@ from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from model import PPOLightning
 from utils import get_config
 
+
+#torch.set_float32_matmul_precision('medium')
 
 def train_ppo(config):
     log_path = "./logs/"

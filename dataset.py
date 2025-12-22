@@ -43,6 +43,7 @@ class GraphDataset(Dataset):
         super().__init__()
 
         self.p = list(eval(fac_range))
+        # print(self.p)
         self.data_path = data_path
         self.city_num = int(data_path.rstrip("/").split("_")[-1])
         self.city_pops = []

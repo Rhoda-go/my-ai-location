@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 
 # 1. 配置路径和文件参数
-data_path = "./data/train_30_100"  # 替换成你的实际数据根目录
+data_path = "./data/train_20_100"  # 替换成你的实际数据根目录
 i = 0  # 对应文件夹0（可修改）
 # 定义要读取的四个.pkl文件名
 file_names = [

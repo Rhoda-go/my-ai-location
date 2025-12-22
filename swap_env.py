@@ -13,7 +13,7 @@ class SwapEnv:
         data_path,
         episode_len=40,
     ):
-        self._dataset = GraphImpDataset(data_path=data_path, fac_range="range(5, 41)")
+        self._dataset = GraphImpDataset(data_path=data_path, fac_range="range(5, 10)")
         self._index_iter = iter(range(len(self._dataset)))
         self._index = None
         self._steps = None

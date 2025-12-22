@@ -85,13 +85,15 @@ class TabuDensitySampling:        #initial with tabu_table
     def sample(self, city_pop, p, tabu_table):
 
         city_pop_np = np.reshape(np.array(city_pop), -1)
+        #print('city_pop_np',city_pop_np)
 
         tabu_table_np = np.array(tabu_table, dtype=int)
+        #print(tabu_table_np)
     
 
 
         facility_list = []  
-        available_nodes = np.arange(city_pop_np)
+        available_nodes = np.arange(len(city_pop_np))
 
        
         while len(facility_list) < p and len(available_nodes) > 0:
