@@ -19,11 +19,11 @@ ppo:
         layer_name: GraphConv
         #edge_dim: 1
         #heads: 1
-    data_path: ./data/train_20_100/
+    data_path: ./data/train_50_100/
 
 ppo_trainer:
     max_epochs: 300
     accelerator: gpu
-    devices: -1
+    devices: 1
     #auto_select_gpus: False
     #track_grad_norm: 2

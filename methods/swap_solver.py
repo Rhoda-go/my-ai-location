@@ -36,9 +36,9 @@ def run_original(dataset, save_path, **kwargs):
     print("Running", name)
 
     for batch in dataset:
-        city_id, city_pop, p, distance_m, _, _, facility_list = batch
+        city_id, city_pop, p, distance_m, _, _,alpha,beta,tabu_table, facility_list = batch
         if not os.path.isfile(f"{sol_path}/{city_id}_{p}.pkl"):
-            cost = get_cost(facility_list, distance_m, city_pop)
+            cost = get_cost(facility_list, distance_m, city_pop, alpha, beta)
             sol = PMPSolution(facility_list, 0, cost)
             pickle.dump(sol, open(f"{sol_path}/{city_id}_{p}.pkl", "wb"))
     return sol_path

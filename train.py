@@ -20,8 +20,13 @@ def train_ppo(config):
     except KeyError:
         log_name = time.strftime("%Y%m%d-%H%M%S")
 
-    if os.path.exists(f"{log_path}/{log_name}/checkpoints"):
-        print(f"{log_path}/{log_name} already exists")
+    # if os.path.exists(f"{log_path}/{log_name}/checkpoints"):
+    #     print(f"{log_path}/{log_name} already exists")
+    #     return
+    
+    ckpt_dir = f"{log_path}/{log_name}/checkpoints"
+    if os.path.exists(ckpt_dir):
+        print(f"{ckpt_dir} already exists")
         return
 
     os.makedirs(f"{log_path}/{log_name}", exist_ok=True)
@@ -32,7 +37,7 @@ def train_ppo(config):
         save_dir=log_path, name="", version=log_name, default_hp_metric=False
     )
     checkpoint_callback = ModelCheckpoint(
-        save_top_k=1, monitor="hp/avg_ep_reward", mode="max", save_last=True
+        dirpath=ckpt_dir, save_top_k=1, monitor="hp/avg_ep_reward", mode="max", save_last=True
     )
     trainer = Trainer(
         callbacks=[LearningRateMonitor(), checkpoint_callback],

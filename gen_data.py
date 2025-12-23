@@ -9,7 +9,7 @@ import numpy as np
 
 def gen_gabriel_graph(data_path, seed, n, k1=3, k2=6):
 
-    SCALE_FACTOR = 5.0  # 1×1→10km×10km
+    SCALE_FACTOR = 10.0  # 1×1→10km×10km
 
     class Edge:
         def __init__(self, start, end):
@@ -100,10 +100,10 @@ def gen_gabriel_graph(data_path, seed, n, k1=3, k2=6):
     centrality_normalized = np.array(list(eigenvector_centrality.values())) / max(eigenvector_centrality.values())
     alpha = alpha * (1+0.1 * centrality_normalized) #alpha bigger in more centralized area
 
-    beta = np.random.normal(1.0, 0.3, n)  # initial decay coefficient
+    beta = np.random.normal(0.8, 0.4, n)  # initial decay coefficient
     beta = np.clip(beta, 0.2, 2.5)
-    # pop_normalized = city_pop / city_pop.max()
-    # beta = beta * (1 + 0.1 * pop_normalized)  #beta bigger in an area with more population
+    pop_normalized = city_pop / city_pop.max()
+    beta = beta * (1 - 0.2 * pop_normalized)  #beta bigger in an area with more population
 
     for i in range(n):
         G.nodes[i]["alpha"] = alpha[i]
@@ -158,8 +158,8 @@ def batch_gen(data_path: str, n: int, graph_num: int):
 
 
 if __name__ == "__main__":
-    batch_gen("./data/train_20_100/", 20, 100)
-    batch_gen("./data/test_20_10/", 20, 10)
+    batch_gen("./data/train_100_100/", 100, 100)
+    batch_gen("./data/test_100_10/", 100, 10)
     # batch_gen("./data/train_30_100/", 30, 100)
     # batch_gen("./data/test_30_10/", 30, 10)
 

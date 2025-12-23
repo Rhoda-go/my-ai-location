@@ -1,5 +1,6 @@
 
 import os
+import sys
 import pickle
 import time
 
@@ -7,33 +8,43 @@ import numpy as np
 import torch
 import torch_geometric.data as geom_data
 
+#from swap_solver import SwapSolver 
 from methods.swap_solver import SwapSolver
 from results import PMPSolution
 from train import PPOLightning
 from utils import get_cost
 
+# 获取项目根目录（methods文件夹的父目录）
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+# 将项目根目录加入sys.path
+sys.path.append(project_root)
 
 class PPOSwapSolver(SwapSolver):
     def __init__(self, iter_num, ckpt, device):
         super().__init__(iter_num)
-        self.model = torch.load(ckpt, map_location=device)
+        #self.model = torch.load(ckpt, map_location=device)
         self.model = (
-            PPOLightning.load_from_checkpoint(ckpt, mode="test").float().to(device)
+            PPOLightning.load_from_checkpoint(ckpt, mode="test", weights_only=True ).float().to(device)
         )
         self.device = device
-        self.warm_up()
+        #self.warm_up()
 
     def warm_up(self):
         rand_state = {
             "mask": torch.randint(
-                0, 2, (self.iter_num, 100), dtype=torch.bool, device=self.device
+                0, 2, (self.iter_num, 50), dtype=torch.bool, device=self.device
             ),
+
+            "tabu_table": torch.randint(
+            0, 2, (self.iter_num, 50, 50), dtype=torch.bool, device=self.device
+        ),
+
             "fac_data": geom_data.Batch.from_data_list(
                 [
                     geom_data.Data(
-                        x=torch.rand(100, 7, device=self.device),
-                        edge_index=torch.randint(0, 100, (2, 100), device=self.device),
-                        edge_attr=torch.rand(100, 1, device=self.device),
+                        x=torch.rand(50, 7, device=self.device),
+                        edge_index=torch.randint(0, 50, (2, 50), device=self.device),
+                        edge_attr=torch.rand(20, 1, device=self.device),
                     )
                     for _ in range(self.iter_num)
                 ]
@@ -50,12 +61,13 @@ class PPOSwapSolver(SwapSolver):
         facility_list,
         static_feat,
         road_net_data,
+        #tabu_table,
         alpha,
         beta,
         mask,
     ):
 
-        wdist = alpha* np.exp(-beta * distance_m[facility_list]) * city_pop
+        wdist = alpha* torch.exp(-beta * distance_m[facility_list]) * city_pop
         #point_indices = torch.argmin(distance_m[facility_list], 0)
         node_costs = torch.sum(wdist, dim=0)  #facility to all nodes
         total_cost = torch.sum(node_costs)  #objective value
@@ -114,9 +126,9 @@ class PPOSwapSolver(SwapSolver):
         )
         static_feat = torch.cat(
             # (coordinates_norm, city_pop.reshape(-1, 1) / torch.sum(city_pop)),
-            (coordinates_norm, city_pop.reshape(-1, 1) / torch.max(city_pop)),
-             alpha.reshape(-1, 1) / torch.max(alpha), beta.reshape(-1, 1) / torch.max(beta),
-
+            (coordinates_norm, city_pop.reshape(-1, 1) / torch.max(city_pop),
+              alpha.reshape(-1, 1) / torch.max(alpha), beta.reshape(-1, 1) / torch.max(beta)
+              ),
             axis=1
         )
         facility_lists = np.tile(facility_list, (self.iter_num, 1))
@@ -124,6 +136,9 @@ class PPOSwapSolver(SwapSolver):
             (self.iter_num, city_pop.shape[0]), dtype=torch.bool, device=self.device
         )
         masks[:, facility_list] = 0
+
+      
+        tabu_table_batch = tabu_table.to(self.device, dtype=torch.bool).unsqueeze(0).repeat(self.iter_num, 1, 1)
 
         for j in range(reloc_step):
             fac_data_list = []
@@ -135,7 +150,7 @@ class PPOSwapSolver(SwapSolver):
                     facility_lists[i],
                     static_feat,
                     road_net_data,
-                    tabu_table,
+                    #tabu_table,
                     alpha,
                     beta,
                     masks[i],
@@ -146,6 +161,7 @@ class PPOSwapSolver(SwapSolver):
 
             state = {
                 "mask": masks,
+                "tabu_table": tabu_table_batch,
                 "fac_data": geom_data.Batch.from_data_list(fac_data_list),
             }
 
@@ -182,16 +198,21 @@ class PPOSwapSolver(SwapSolver):
             masks[np.arange(self.iter_num), fac_in] = False
 
         for i in range(self.iter_num):
-            wdist = alpha* np.exp(-beta * distance_m[facility_list]) * city_pop
+            wdist = alpha* torch.exp(-beta * distance_m[facility_lists[i]]) * city_pop
+            # print(facility_lists[i])
+            # print(alpha.shape,beta.shape,len(facility_lists[i]),city_pop.shape)
             #point_indices = torch.argmin(distance_m[facility_list], 0)
             node_costs = torch.sum(wdist, dim=0)  #facility to all nodes
             cost = torch.sum(node_costs)  #objective value
-            assert(get_cost(facility_lists[i], distance_m, city_pop) == cost)
+            actual_cost = get_cost(facility_lists[i], distance_m, city_pop, alpha, beta)
+            assert torch.isclose(actual_cost, cost, rtol=1e-5, atol=1)
             if best_sol is None or cost > best_sol.cost:
                 best_sol = PMPSolution(facility_lists[i], np.nan, cost)
 
         best_sol.time = time.time() - start
-
+        print(city_pop)
+        print("facility_lists[np.arange(self.iter_num)",facility_lists[np.arange(self.iter_num)])
+        print(best_sol.cost)
         return best_sol
 
 

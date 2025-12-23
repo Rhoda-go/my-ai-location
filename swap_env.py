@@ -13,7 +13,7 @@ class SwapEnv:
         data_path,
         episode_len=40,
     ):
-        self._dataset = GraphImpDataset(data_path=data_path, fac_range="range(5, 10)")
+        self._dataset = GraphImpDataset(data_path=data_path, fac_range="range(5, 11)")
         self._index_iter = iter(range(len(self._dataset)))
         self._index = None
         self._steps = None
@@ -36,7 +36,7 @@ class SwapEnv:
         self.mask = None
 
     def _get_fac_data(self):
-        wdist = self.alpha* np.exp(-self.beta * self.distance_m[self.facility_list]) * self.city_pop
+        wdist = self.alpha* torch.exp(-self.beta * self.distance_m[self.facility_list]) * self.city_pop
         #point_indices = torch.argmin(self.distance_m[self.facility_list], 0)
         #node_costs = wdist[point_indices, torch.arange(self.distance_m.shape[1])]
         node_costs = torch.sum(wdist, dim=0)  #facility to all nodes
@@ -77,8 +77,17 @@ class SwapEnv:
         return fac_data
 
     def _get_obs(self):
-        return {"mask": self.mask, "fac_data": self._get_fac_data()}
+        #     obs = {
+        #     "mask": self.mask,
+        #     "fac_data": self._get_fac_data(),
+        #     "tabu_table": self.tabu_table
+        # }
+        # # 打印：单样本mask的形状+维度数+长度
+        #     print(f"单样本mask：形状={obs['mask'].shape}，维度数={obs['mask'].ndim}，长度={len(obs['mask'])}")
+        #     return obs
 
+        return {"mask": self.mask, "fac_data": self._get_fac_data(), "tabu_table": self.tabu_table}
+    
     def _get_info(self):
         return {"cost": self.total_cost}
 
@@ -127,6 +136,8 @@ class SwapEnv:
         observation = self._get_obs() 
         info = self._get_info()
         self.init_cost = self.total_cost
+
+       
 
         return observation, info
 
