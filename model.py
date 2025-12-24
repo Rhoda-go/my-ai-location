@@ -1,4 +1,6 @@
+
 import torch
+import copy
 import torch.nn as nn
 import torch_geometric
 import torch_geometric.nn as geom_nn
@@ -15,6 +17,9 @@ def collate_fn_ppo(batch):
     states, actions, logp_olds, v_olds, qvals, advs = zip(*batch)
     new_states = {}
     new_states["mask"] = torch.stack([state["mask"] for state in states])
+    #print(f"批量后mask：形状={new_states['mask'].shape}，维度数={new_states['mask'].ndim}")
+    new_states["tabu_table"] = torch.stack([state["tabu_table"] for state in states])
+    #print(f"批量后tabu：形状={new_states['tabu_table'].shape}，维度数={new_states['tabu_table'].ndim}") 
     new_states["fac_data"] = torch_geometric.data.Batch.from_data_list(
         [state["fac_data"] for state in states]
     )
@@ -33,6 +38,19 @@ class GraphFeatureExtractor(nn.Module):
 
         gnn_layer = getattr(geom_nn, layer_name)
 
+        '''
+        根据ai修改的代码，增加1
+        '''
+        heads_supported_layers = ["GATConv", "GATv2Conv", "TransformerConv"]
+        use_heads = layer_name in heads_supported_layers and "heads" in kwargs
+        # 移除GraphConv不支持的参数（heads/edge_dim）
+        if not use_heads:
+            kwargs.pop("heads", None)
+            kwargs.pop("edge_dim", None)
+        # 取heads值（支持的层用配置的，不支持的层默认1）
+        heads = kwargs.get("heads", 1) if use_heads else 1   #到这
+
+
         layers = []
         in_channels, out_channels = c_in, c_hidden
         for _ in range(num_layers - 1):
@@ -40,7 +58,14 @@ class GraphFeatureExtractor(nn.Module):
                 gnn_layer(in_channels, out_channels, **kwargs),
                 nn.ReLU(inplace=True),
             ]
-            in_channels = c_hidden * kwargs["heads"]
+            #in_channels = c_hidden * kwargs["heads"]
+
+            '''
+            根据ai修改的代码，修改上一行
+            '''
+            in_channels = c_hidden * heads if use_heads else c_hidden
+
+
         layers += [gnn_layer(in_channels=in_channels, out_channels=c_out, **kwargs)]
 
         self.layers = nn.ModuleList(layers)
@@ -76,9 +101,25 @@ class ActorCritic(nn.Module):
         self, fac_c_in, c_hidden, c_out, num_layers, layer_name, **kwargs
     ) -> None:
         super().__init__()
-        if "heads" not in kwargs:
-            kwargs["heads"] = 1
-        emb_size = c_out * kwargs["heads"] * 2
+        '''
+        根据ai修改的代码，增加3
+        '''
+        heads_supported_layers = ["GATConv", "GATv2Conv", "TransformerConv"]
+        use_heads = layer_name in heads_supported_layers
+        if use_heads:
+        # 支持heads的层，默认补1
+            if "heads" not in kwargs:
+                kwargs["heads"] = 1
+            emb_size = c_out * kwargs["heads"] * 2
+        else:
+            # 不支持heads的层，强制删除参数，emb_size按heads=1计算
+            kwargs.pop("heads", None)
+            emb_size = c_out * 2  # 等价于c_out * 1 * 2  #到这，还原下面三行
+
+
+        # if "heads" not in kwargs:
+        #     kwargs["heads"] = 1
+        # emb_size = c_out * kwargs["heads"] * 2
 
         self.actor_gnn = GraphFeatureExtractor(
             fac_c_in, c_hidden, c_out, num_layers, layer_name, **kwargs
@@ -92,7 +133,8 @@ class ActorCritic(nn.Module):
         self.critic = MLP(emb_size, c_hidden, 1, num_layers)
 
     def actor_forward(self, state, action1=None):
-        batch_fac, mask = state["fac_data"], state["mask"]
+        #batch_fac, mask, tabu_table = state["fac_data"], state["mask"], state["tabu_table"]
+        batch_fac, mask, tabu_table = state["fac_data"], state["mask"], state["tabu_table"]
         batch = batch_fac.batch
         if batch is None:
             batch = torch.zeros(
@@ -119,8 +161,38 @@ class ActorCritic(nn.Module):
         act_scores2 = torch.matmul(emb_fac, feat_act.T)
         act_scores2 = act_scores2[torch.arange(act_scores2.shape[0]), batch]
         act_scores2 = act_scores2.reshape(pooling.shape[0], -1)
-        mask2 = torch.where(mask, 0, -float("inf"))
-        logits2 = act_scores2 + mask2
+        
+        # #过滤逻辑，但是这是单个样本的处理逻辑，需要改成批量操作的逻辑
+        # mask_tabu=(tabu_table == 1)      # torch.bool 
+        # mask2 = copy.deepcopy(mask)
+        # print('mask2',len(mask2))
+        # candidate_indices = torch.where(mask2 == 0)[0]  # selected location index
+      
+        # if len(candidate_indices) > 0:
+        #     for idx in candidate_indices:
+        #         tabu_row = mask_tabu[idx] 
+        #         mask2 = mask2 & tabu_row  #true&true=true，true&false=false
+        '''
+        filtered by tabu_table
+        '''
+        mask_tabu = (tabu_table == 1)  # [batch, nodes, nodes]
+        mask2 = mask.clone()  # [batch, nodes]
+        
+        batch_size = mask2.shape[0]
+        
+        for i in range(batch_size):
+            sample_mask = mask2[i]  # [nodes]
+            candidate_indices = torch.where(sample_mask == 0)[0] # candidate_indices for batch i（where mask=0）
+
+            for idx in candidate_indices:
+                tabu_row = mask_tabu[i, idx]  # [nodes]
+                sample_mask = sample_mask & tabu_row #true&true=true，true&false=false
+            
+            # update
+            mask2[i] = sample_mask
+                
+        logits_mask = torch.where(mask2, 0, -float("inf"))
+        logits2 = act_scores2 + logits_mask
         pi2 = Categorical(logits=logits2)
         action2 = pi2.sample()
 
@@ -450,4 +522,3 @@ class PPOLightning(LightningModule):
 
     def train_dataloader(self) -> DataLoader:
         return self._dataloader()
-

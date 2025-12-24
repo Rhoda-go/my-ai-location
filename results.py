@@ -26,8 +26,9 @@ class PMPSolution:
         else:
             self.cost = cost
 
-    def eval(self, city_pop, distance_m):
-        self.cost = get_cost(self.facility_list, distance_m, city_pop).item()
+    def eval(self, city_pop, distance_m, alpha, beta):
+        
+        self.cost = get_cost(self.facility_list, distance_m, city_pop, alpha, beta).item()
 
 
 def save_avg(sol_path, dataset, optmial_path, reloc=None):
