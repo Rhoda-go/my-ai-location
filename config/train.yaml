@@ -25,5 +25,5 @@ ppo_trainer:
     max_epochs: 300
     accelerator: gpu
     devices: [1]
-    auto_select_gpus: False
-    track_grad_norm: 2
+    # auto_select_gpus: False
+    # track_grad_norm: 2
