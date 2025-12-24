@@ -2,7 +2,7 @@ iter_num: &iter_num 20
 device: &device cuda:0
 reloc_coef: 0.5
 
-data_path: ./data/test_50_10/
+data_path: ./data/test_100_10/
 
 methods:
   # Gurobi:
@@ -28,6 +28,6 @@ methods:
   PPO-swap:
     run_fn: run_ppo_swap_reloc
     iter_num: *iter_num
-    ckpt: ./logs/20251223-164951/checkpoints/epoch=280-step=4496.ckpt
+    ckpt: ./logs/20251224-054901/checkpoints/epoch=254-step=4080.ckpt
     name: ppo_swap_test
     device: *device

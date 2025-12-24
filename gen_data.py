@@ -96,14 +96,14 @@ def gen_gabriel_graph(data_path, seed, n, k1=3, k2=6):
         
         
     # Generate attraction parameters
-    alpha = np.random.uniform(0.0, 0.5, n)  # initial basic coefficient
+    alpha = np.random.uniform(0, 0.6, n)  # initial basic coefficient
     centrality_normalized = np.array(list(eigenvector_centrality.values())) / max(eigenvector_centrality.values())
-    alpha = alpha * (1+0.1 * centrality_normalized) #alpha bigger in more centralized area
+    alpha = alpha * (1+0.2 * centrality_normalized) #alpha bigger in more centralized area
 
-    beta = np.random.normal(0.8, 0.4, n)  # initial decay coefficient
-    beta = np.clip(beta, 0.2, 2.5)
-    pop_normalized = city_pop / city_pop.max()
-    beta = beta * (1 - 0.2 * pop_normalized)  #beta bigger in an area with more population
+    beta = np.random.normal(1.5, 0.6, n)  # initial decay coefficient
+    beta = np.clip(beta, 0.3, 2.2)
+    # pop_normalized = city_pop / city_pop.max()
+    # beta = beta * (1 - 0.2 * pop_normalized)  #beta bigger in an area with more population
 
     for i in range(n):
         G.nodes[i]["alpha"] = alpha[i]
