@@ -1,0 +1,14 @@
+\ Model facility_relocation_copy
+\ LP format - for model browsing. Use MPS format to capture full model detail.
+Maximize
+ 
+Subject To
+ Tabu_32_41: Select[32] = 0
+ Tabu_72_9: Select[72] = 0
+ Tabu_95_2: Select[95] = 0
+ Relocation_budget: - Select[31] - Select[32] - Select[43] - Select[72]
+   - Select[95] <= -3
+Bounds
+Binaries
+ Select[31] Select[32] Select[43] Select[72] Select[95]
+End

@@ -1,0 +1,170 @@
+
+import torch
+import numpy as np
+import torch_geometric.data as geom_data
+
+from dataset import GraphImpDataset
+from utils import DensitySampling
+from utils import TabuDensitySampling
+
+class SwapEnv:
+    def __init__(
+        self,
+        data_path,
+        episode_len=40,
+    ):
+        self._dataset = GraphImpDataset(data_path=data_path, fac_range="range(5, 41, 5)")
+        self._index_iter = iter(range(len(self._dataset)))
+        self._index = None
+        self._steps = None
+        self._episode_len = episode_len
+
+        self.city_pop = None
+        self.p = None
+        self.distance_m = None
+        self.road_net_data = None
+        self.total_cost = None
+        self.total_pop = None
+        self.init_cost = None
+        self.static_feat = None
+        self.alpha=None
+        self.beta=None
+        self.tabu_table=None
+
+
+        self.facility_list = None
+        self.mask = None
+
+    def _get_fac_data(self):
+        #wdist = self.alpha* torch.exp(-self.beta * self.distance_m[self.facility_list]) * self.city_pop
+        wdist = (self.alpha[self.facility_list].unsqueeze(1) *  # [p, 1]
+                 torch.exp(-self.beta[self.facility_list].unsqueeze(1) * self.distance_m[self.facility_list]) *  # [p, n_nodes]
+                 self.city_pop.unsqueeze(0)  # [1, n_nodes]
+                 )
+        #point_indices = torch.argmin(self.distance_m[self.facility_list], 0)
+        #node_costs = wdist[point_indices, torch.arange(self.distance_m.shape[1])]
+        node_costs = torch.sum(wdist, dim=0)  #facility to all nodes
+        self.total_cost = torch.sum(node_costs)  #objective value
+
+        #fac_costs = torch.zeros(self.p, device=wdist.device) #delete
+        #fac_pop = torch.zeros(self.p, device=self.city_pop.device)
+
+        #fac_costs.scatter_add_(0, point_indices, node_costs)
+        #fac_pop.scatter_add_(0, point_indices, self.city_pop)
+
+        # #fac_feat = torch.cat(
+        #     (
+        #         fac_pop.reshape(-1, 1) / torch.max(fac_pop),
+        #         fac_costs.reshape(-1, 1) / torch.max(fac_costs),
+        #     ),
+        #     axis=1,
+        # )
+        # node_fac_feat = torch.zeros((self.city_pop.shape[0], fac_feat.shape[1]))
+        # node_fac_feat[self.facility_list] = fac_feat
+
+        node_feat = torch.cat(
+            (
+                self.static_feat,
+                self.mask.reshape(-1, 1),
+                node_costs.reshape(-1, 1) / torch.max(node_costs),
+                #node_fac_feat,
+            ),
+            axis=1,
+        )
+
+        fac_data = geom_data.Data(
+            x=node_feat,
+            edge_index=self.road_net_data.edge_index,
+            edge_attr=self.road_net_data.edge_attr,
+        )
+
+        return fac_data
+
+    def _get_obs(self):
+        #     obs = {
+        #     "mask": self.mask,
+        #     "fac_data": self._get_fac_data(),
+        #     "tabu_table": self.tabu_table
+        # }
+        # # 打印：单样本mask的形状+维度数+长度
+        #     print(f"单样本mask：形状={obs['mask'].shape}，维度数={obs['mask'].ndim}，长度={len(obs['mask'])}")
+        #     return obs
+
+        return {"mask": self.mask, "fac_data": self._get_fac_data(), "tabu_table": self.tabu_table}
+    
+    def _get_info(self):
+        return {"cost": self.total_cost}
+
+    def reset(self):
+        try:
+            self._index = next(self._index_iter)
+        except StopIteration:
+            self._index_iter = iter(range(len(self._dataset)))
+            self._index = next(self._index_iter)
+
+        (
+            _,
+            self.city_pop,
+            self.p,
+            self.distance_m,
+            self.coordinates,
+            self.road_net_data,
+            self.alpha,
+            self.beta,
+            self.tabu_table,
+            self.facility_list,
+        ) = self._dataset[self._index]
+        # print("alpha",self.alpha)
+        # print("beta",self.beta)
+        # print("coordinates",self.coordinates)
+        # print("city_pop",self.city_pop)
+
+        self.total_pop = torch.sum(self.city_pop)
+        self.static_feat = torch.cat(
+            (
+                self.coordinates,
+                self.city_pop.reshape(-1, 1) / torch.max(self.city_pop),
+                self.alpha.reshape(-1, 1) / torch.max(self.alpha) ,
+                self.beta.reshape(-1, 1) / torch.max(self.beta),
+
+            ),
+            axis=1,
+        )
+
+        self._steps = 0
+        #self.facility_list = DensitySampling(1).sample(self.city_pop, self.p)
+        self.facility_list = TabuDensitySampling(exp=1).sample(self.city_pop, self.p, self.tabu_table)
+        self.mask = torch.ones(self.city_pop.shape[0], dtype=torch.bool)
+        self.mask[self.facility_list] = 0
+
+        observation = self._get_obs() 
+        info = self._get_info()
+        self.init_cost = self.total_cost
+
+       
+
+        return observation, info
+
+    def step(self, action):
+        pre_cost = self.total_cost
+
+        fac_out, fac_in = action
+        if fac_out == fac_in:
+            done = True
+            return self._get_obs(), 0.0, done, False, self._get_info()
+
+        assert self.mask[fac_out] == 0
+        assert self.mask[fac_in] == 1
+
+        self.facility_list[self.facility_list == fac_out] = fac_in
+        self.mask[fac_out] = 1
+        self.mask[fac_in] = 0
+
+        self._steps += 1
+        truncated = self._steps == self._episode_len
+        done = False
+        observation = self._get_obs()
+        info = self._get_info()
+        reward = (self.total_cost-pre_cost) / self.init_cost   #delta increasing population
+
+        return observation, reward, done, truncated, info
