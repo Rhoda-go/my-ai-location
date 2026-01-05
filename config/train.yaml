@@ -19,8 +19,8 @@ ppo:
         layer_name: GraphConv
         #edge_dim: 1
         #heads: 1
-    #data_path: ./data/train_100_500/
-    data_path: ./data/train_1000_500/
+    data_path: ./data/train_100_500/
+    #data_path: ./data/train_1000_500/
     # data_path: ./data/train_300_1000/
 
 ppo_trainer:
