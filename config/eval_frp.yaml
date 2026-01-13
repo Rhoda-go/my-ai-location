@@ -1,9 +1,9 @@
-iter_num: &iter_num 15
+iter_num: &iter_num 30
 device: &device cuda:0
 reloc_coef: 0.6
 
 #data_path: ./data/test_100_20/
-data_path: ./data/test_100_20/
+data_path: ./data/test_1000_20/
 #data_path: ./data/test_100_20/
 
 
@@ -31,10 +31,10 @@ methods:
   PPO-swap:
     run_fn: run_ppo_swap_reloc
     iter_num: *iter_num
-    ckpt: ./logs/20260106-010525/checkpoints/epoch=211-step=3392.ckpt  #100 "range(5, 10)"
-    #ckpt: ./logs/20260104-210252/checkpoints/epoch=77-step=1248.ckpt  #100 "range(5, 26,5)"  swap_env
-    #ckpt: ./logs/20260103-140441/checkpoints/epoch=279-step=4480.ckpt   #300  "range(5, 26, 5)"
-    #ckpt: ./logs/20260105-155051/checkpoints/epoch=83-step=1344.ckpt  #100 "range(5, 41, 5)"  swap_env
+    #ckpt: ./logs/20260106-010525/checkpoints/epoch=211-step=3392.ckpt  #100 "range(5, 10)"
+    ckpt: ./logs/20260106-061223/checkpoints/epoch=230-step=3696.ckpt  #100 "range(5, 10)"
+    
+ 
 
     name: ppo_swap_test
     device: *device

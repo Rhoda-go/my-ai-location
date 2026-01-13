@@ -155,13 +155,13 @@ def batch_gen(data_path: str, n: int, graph_num: int):
 
 
 if __name__ == "__main__":
-    batch_gen("./data/train_100_500/", 100, 500)
-    batch_gen("./data/test_100_20/", 100, 20)
+    # batch_gen("./data/train_100_500/", 100, 500)
+    # batch_gen("./data/test_100_20/", 100, 20)
     # batch_gen("./data/train_200_1000/", 200, 1000)
     # batch_gen("./data/test_200_20/", 200, 20)
     # batch_gen("./data/train_300_1000/", 300, 1000)
     # batch_gen("./data/test_300_20/", 300, 20)
-    # batch_gen("./data/train_1000_1000/", 1000, 500)
-    # batch_gen("./data/test_1000_20/", 1000, 20)
+    batch_gen("./data/train_1000_1000/", 1000, 500)
+    batch_gen("./data/test_1000_20/", 1000, 20)
 
 

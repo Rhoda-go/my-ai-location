@@ -12,7 +12,7 @@ from utils import get_config
 
 def run_pmp_graph(config):
     data_path = config['data_path']
-    dataset = GraphDataset(data_path, "range(5, 26,5)")
+    dataset = GraphDataset(data_path, "range(2,6)")
     save_path = f"{data_path}/result_pmp/"
 
     res_list = {}

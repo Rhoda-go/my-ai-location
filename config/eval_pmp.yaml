@@ -1,10 +1,11 @@
-init_num: &init_num 3
-iter_num: &iter_num 15
+init_num: &init_num 5
+iter_num: &iter_num 20
 swap_num: &swap_num null
 device: &device cuda:0
 
 #data_path: ./data/test_100_20/
-data_path: ./data/test_200_20/
+# data_path: ./data/test_200_20/
+data_path: ./casedata/test_10_1/
 
 methods:
   Gurobi:
@@ -40,7 +41,7 @@ methods:
     iter_num: *iter_num
     swap_num: *swap_num
     #ckpt: ./logs/20260104-181101/checkpoints/epoch=170-step=2736.ckpt  #100 "range(5, 10)"
-    ckpt: ./logs/20260104-210252/checkpoints/epoch=77-step=1248.ckpt  #100 "range(5, 26,5)"  swap_env
+    ckpt: ./logs/20260106-061223/checkpoints/epoch=230-step=3696.ckpt  #100 "range(5, 26,5)"  swap_env
     #ckpt: ./logs/20260102-195112/checkpoints/epoch=228-step=3664.ckpt
     name: ppo_swap_test
     device: *device

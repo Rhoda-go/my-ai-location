@@ -126,6 +126,16 @@ class PPOSwapSolver(SwapSolver):
         coordinates_norm = (coordinates - torch.min(coordinates, 0)[0]) / max(
             torch.max(coordinates, 0)[0] - torch.min(coordinates, 0)[0]
         )
+
+        '''
+        facility_list先用禁忌表过滤一下，防止生成的初始解有禁忌设施
+        '''
+
+
+
+
+
+
         static_feat = torch.cat(
             # (coordinates_norm, city_pop.reshape(-1, 1) / torch.sum(city_pop)),
             (coordinates_norm, city_pop.reshape(-1, 1) / torch.max(city_pop),
@@ -161,6 +171,8 @@ class PPOSwapSolver(SwapSolver):
                 if best_sol is None or cost > best_sol.cost:
                     best_sol = PMPSolution(facility_lists[i], np.nan, cost)
 
+                
+
             # get_fac_data_time = time.time() - start
             # print('get_fac_data_time',get_fac_data_time)
 
@@ -172,10 +184,11 @@ class PPOSwapSolver(SwapSolver):
 
             with torch.no_grad():
                 action = self.model(state)[1].cpu().numpy()
+            tabu_table_min= np.minimum(tabu_table, tabu_table.T)
             filtered_facility_lists =[] 
             fac_out = action[:, 0].astype(np.int64)  # int
             fac_in = action[:, 1].astype(np.int64)  # int    
-            mask_tabu = (tabu_table == 1)  # shape: (n_nodes, n_nodes)
+            mask_tabu = (tabu_table_min == 1)  # shape: (n_nodes, n_nodes)
             n_nodes=len(tabu_table[0])
             
             for row in range(self.iter_num):
@@ -227,14 +240,17 @@ class PPOSwapSolver(SwapSolver):
             if best_sol is None or cost > best_sol.cost:
                 best_sol = PMPSolution(facility_lists[i], np.nan, cost)
                 best_facility=facility_lists[i]
+            
+                
+            
 
-
+        
 
         best_sol.time = time.time() - start
         # print(city_pop)
         #print("facility_lists[np.arange(self.iter_num)",facility_lists[np.arange(self.iter_num)])
-        print('best_facility',best_facility)
-        print(best_sol.cost)
+        # print('best_facility',best_facility)
+        # print(best_sol.cost)
  
         return (best_sol)
 
