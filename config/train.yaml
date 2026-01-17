@@ -16,20 +16,15 @@ ppo:
         c_hidden: 128
         c_out: 128
         num_layers: 3
-        layer_name: GraphConv
+        num_heads: 4
+        layer_name: GATv2Conv
         #edge_dim: 1
         #heads: 1
     data_path: ./data/train_100_100/
 
 ppo_trainer:
-    max_epochs: 300
+    max_epochs: 50
     accelerator: gpu
-<<<<<<< HEAD
-    devices: [1]
-    # auto_select_gpus: False
-    # track_grad_norm: 2
-=======
     devices: 1
     #auto_select_gpus: False
     #track_grad_norm: 2
->>>>>>> main

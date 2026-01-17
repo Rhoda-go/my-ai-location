@@ -28,6 +28,7 @@ methods:
   PPO-swap:
     run_fn: run_ppo_swap_reloc
     iter_num: *iter_num
-    ckpt: ./logs/20251224-054901/checkpoints/epoch=254-step=4080.ckpt
+    # ckpt: ./logs/20251224-054901/checkpoints/epoch=254-step=4080.ckpt
+    ckpt: ./logs/20260116-102030/checkpoints/epoch=0-step=16.ckpt
     name: ppo_swap_test
     device: *device
