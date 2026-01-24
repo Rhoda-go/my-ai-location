@@ -1,8 +1,8 @@
 from dataset import GraphImpDataset
 # from methods.br import run_br
 # from methods.fr2fp import run_FR2FP
-# from methods.greedy_swap import run_greedy_swap_reloc
 # from methods.random_swap import run_random_swap_reloc
+from methods.greedy import run_greedy_swap_reloc
 from methods.gurobi import run_gurobi_reloc
 from methods.ppo_swap import run_ppo_swap_reloc
 from methods.swap_solver import run_original
@@ -11,14 +11,10 @@ from utils import get_config
 
 
 def eval_frp(config):
-
-
-    data_path = config['data_path']
-    
+    data_path = config['data_path']   
     reloc_coef = config['reloc_coef']
-    dataset = GraphImpDataset(data_path, "range(5,10)")
+    dataset = GraphImpDataset(data_path, "range(10,15)")
     save_path = f"{data_path}/results_frp_{reloc_coef}/"
-
     res_list = {}
     baseline = "Gurobi"
     optimal_path = run_gurobi_reloc(dataset=dataset, save_path=save_path, reloc_coef=reloc_coef, OutputFlag=0, MIPGap=0)

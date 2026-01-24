@@ -8,6 +8,8 @@ import torch
 import torch_geometric.data as geom_data
 from torch.utils.data import Dataset
 from utils import TabuDensitySampling
+from utils import TabuAlphaSampling
+from utils import AlphaSampling
 
 
 def preprocess_graph(graph, distance_m):
@@ -124,6 +126,7 @@ class GraphImpDataset(GraphDataset):
             # )
 
             init_facility=TabuDensitySampling(exp=1).sample(city_pop[city_id], p, tabu_table[city_id])
+             # init_facility=TabuAlphaSampling(exp=1).sample(alpha[city_id], p, tabu_table[city_id])
 
 
             pickle.dump(

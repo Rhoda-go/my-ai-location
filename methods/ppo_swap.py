@@ -132,10 +132,6 @@ class PPOSwapSolver(SwapSolver):
         '''
 
 
-
-
-
-
         static_feat = torch.cat(
             # (coordinates_norm, city_pop.reshape(-1, 1) / torch.sum(city_pop)),
             (coordinates_norm, city_pop.reshape(-1, 1) / torch.max(city_pop),
@@ -170,9 +166,7 @@ class PPOSwapSolver(SwapSolver):
                 fac_data_list.append(fac_data)
                 if best_sol is None or cost > best_sol.cost:
                     best_sol = PMPSolution(facility_lists[i], np.nan, cost)
-
-                
-
+         
             # get_fac_data_time = time.time() - start
             # print('get_fac_data_time',get_fac_data_time)
 
@@ -189,6 +183,7 @@ class PPOSwapSolver(SwapSolver):
             fac_out = action[:, 0].astype(np.int64)  # int
             fac_in = action[:, 1].astype(np.int64)  # int    
             mask_tabu = (tabu_table_min == 1)  # shape: (n_nodes, n_nodes)
+            #mask_tabu = (tabu_table == 1)  # shape: (n_nodes, n_nodes)
             n_nodes=len(tabu_table[0])
             
             for row in range(self.iter_num):
@@ -200,14 +195,54 @@ class PPOSwapSolver(SwapSolver):
             for i in range(self.iter_num):
                 k_list = filtered_facility_lists[i]  
                 violate_tabu = False  # 
-                target_col = fac_in[i]  # fac_in[i] is checked           
-                for k in k_list:                 
+                target_col = fac_in[i]  # fac_in[i] is checked  
+                #k_filter = np.where(np.all(mask_tabu[list(k_list), :], 0))[0]  #都不冲突的选址下标       
+                sub_mask = mask_tabu[list(k_list), :]
+ 
+                all_true_cols = sub_mask.all(0)
+    
+                k_filter = np.where(all_true_cols)[0]  # 全部为True的列下标集合
+                
+                for k in k_list:
                     if not mask_tabu[k, target_col]:  # if not TRUE (tabu_table[k, target_col] == 0)
                         violate_tabu = True      
                         break  
                 if violate_tabu:
-                    valid_indices = list(set(range(n_nodes))-(set(facility_lists[i]) | {fac_in[i]}))
-                    fac_in[i] = np.random.choice(valid_indices)
+                    # valid_indices = list(set(range(n_nodes))-(set(facility_lists[i]) | {fac_in[i]}))
+                    # fac_in[i]  = np.random.choice(np.intersect1d(valid_indices, k_filter))
+                    valid_set = set(range(n_nodes)) - (set(facility_lists[i]) | {fac_in[i]})
+                    valid_indices = np.intersect1d(list(valid_set), k_filter)
+                    valid_indices_tensor = torch.from_numpy(valid_indices).long()
+
+                    cost_matrix = (
+                        alpha[valid_indices_tensor].unsqueeze(1)
+                        * torch.exp(-beta[valid_indices_tensor].unsqueeze(1) * distance_m[valid_indices_tensor])
+                        * city_pop.unsqueeze(0)
+                    )
+
+                    # 找总收益最大的设施
+                    total_cost = cost_matrix.sum(dim=1)
+                    max_fac_idx = torch.argmax(total_cost)
+                    fac_in[i] = valid_indices[max_fac_idx.item()]
+
+
+                if fac_in[i] in facility_lists[i]:  
+                    valid_indices=np.setdiff1d(k_filter, facility_lists[i])
+                    valid_indices_tensor = torch.from_numpy(valid_indices).long()
+
+                    cost_matrix = (
+                        alpha[valid_indices_tensor].unsqueeze(1)
+                        * torch.exp(-beta[valid_indices_tensor].unsqueeze(1) * distance_m[valid_indices_tensor])
+                        * city_pop.unsqueeze(0)
+                    )
+
+                    # 找总收益最大的设施
+                    total_cost = cost_matrix.sum(dim=1)
+                    max_fac_idx = torch.argmax(total_cost)
+                    fac_in[i] = valid_indices[max_fac_idx.item()]
+
+                    #fac_in[i]  = np.random.choice(np.setdiff1d(k_filter, facility_lists[i]))
+               
             # tabu_time=time.time()-tabu_start
             # print('tabu_time',tabu_time)
 
@@ -218,6 +253,16 @@ class PPOSwapSolver(SwapSolver):
 
             fac_out_index = np.where(facility_lists == fac_out[:, None])[1]
             facility_lists[np.arange(self.iter_num), fac_out_index] = fac_in
+
+            # for i in range(self.iter_num):
+            #     # 只在第 i 行中查找 fac_out[i]
+            #     idx = np.where(facility_lists[i] == fac_out[i])[0]
+                
+            #     if len(idx) > 0:
+            #         pos = idx[0]  # 取第一个匹配位置
+            #         facility_lists[i, pos] = fac_in[i]
+            #     else:
+            #         print(f"Warning: fac_out[{i}]={fac_out[i]} not found in facility_lists[{i}]")
 
             masks[np.arange(self.iter_num), fac_out] = True
             masks[np.arange(self.iter_num), fac_in] = False

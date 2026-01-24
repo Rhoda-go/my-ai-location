@@ -1,6 +1,6 @@
 
 from dataset import GraphDataset
-# from methods.greedy_swap import run_greedy_swap
+from methods.greedy import run_greedy_swap
 # from methods.maranzana import run_maranzana
 # from methods.random_swap import run_random_swap
 # from methods.sa import run_SA
@@ -12,8 +12,8 @@ from utils import get_config
 
 def run_pmp_graph(config):
     data_path = config['data_path']
-    dataset = GraphDataset(data_path, "range(2,6)")
-    save_path = f"{data_path}/result_pmp/"
+    dataset = GraphDataset(data_path, "range(10,15)")
+    save_path = f"{data_path}/result_pmp_alpha_min/"
 
     res_list = {}
 

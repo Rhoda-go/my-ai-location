@@ -58,7 +58,7 @@ class GraphFeatureExtractor(nn.Module):
                 gnn_layer(in_channels, out_channels, **kwargs),
                 nn.ReLU(inplace=True),
             ]
-            #in_channels = c_hidden * kwargs["heads"]
+            #in_channels = c_hidden * kwargs["heads"]å
 
             '''
             根据ai修改的代码，修改上一行
@@ -162,37 +162,40 @@ class ActorCritic(nn.Module):
         act_scores2 = act_scores2[torch.arange(act_scores2.shape[0]), batch]
         act_scores2 = act_scores2.reshape(pooling.shape[0], -1)
         
-        # #过滤逻辑，但是这是单个样本的处理逻辑，需要改成批量操作的逻辑
-        # mask_tabu=(tabu_table == 1)      # torch.bool 
-        # mask2 = copy.deepcopy(mask)
-        # print('mask2',len(mask2))
-        # candidate_indices = torch.where(mask2 == 0)[0]  # selected location index
-      
-        # if len(candidate_indices) > 0:
-        #     for idx in candidate_indices:
-        #         tabu_row = mask_tabu[idx] 
-        #         mask2 = mask2 & tabu_row  #true&true=true，true&false=false
-        '''
-        filtered by tabu_table
-        '''
-        mask_tabu = (tabu_table == 1)  # [batch, nodes, nodes]
-        mask2 = mask.clone()  # [batch, nodes]
+  
+        # '''
+        # filtered by tabu_table
+        # '''
+        # mask_tabu = (tabu_table == 1)  # [batch, nodes, nodes]
+        # mask2 = mask.clone()  # [batch, nodes]
         
-        batch_size = mask2.shape[0]
+        # batch_size = mask2.shape[0]
         
-        for i in range(batch_size):
-            sample_mask = mask2[i]  # [nodes]
-            candidate_indices = torch.where(sample_mask == 0)[0] # candidate_indices for batch i（where mask=0）
+        # for i in range(batch_size):
+        #     sample_mask = mask2[i]  # [nodes]
+        #     candidate_indices = torch.where(sample_mask == 0)[0] # candidate_indices for batch i（where mask=0）
 
-            for idx in candidate_indices:
-                tabu_row = mask_tabu[i, idx]  # [nodes]
-                sample_mask = sample_mask & tabu_row #true&true=true，true&false=false
+        #     for idx in candidate_indices:
+        #         tabu_row = mask_tabu[i, idx]  # [nodes]
+        #         sample_mask = sample_mask & tabu_row #true&true=true，true&false=false
             
-            # update
-            mask2[i] = sample_mask
+        #     # update
+        #     mask2[i] = sample_mask
                 
-        logits_mask = torch.where(mask2, 0, -float("inf"))
-        logits2 = act_scores2 + logits_mask
+        # logits_mask = torch.where(mask2, 0, -float("inf"))
+        # logits2 = act_scores2 + logits_mask
+        # pi2 = Categorical(logits=logits2)
+        # action2 = pi2.sample()
+
+        # logits = torch.stack([logits1, logits2], dim=1).squeeze(0)
+        # action = torch.stack([action1, action2], dim=1).squeeze(0)
+        # return Categorical(logits=logits), action
+
+        '''
+        original
+        '''
+        mask2 = torch.where(mask, 0, -float("inf"))
+        logits2 = act_scores2 + mask2
         pi2 = Categorical(logits=logits2)
         action2 = pi2.sample()
 
