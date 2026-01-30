@@ -1,19 +1,23 @@
 
 from dataset import GraphDataset
 from methods.greedy import run_greedy_swap
+from methods.greedy_filter import run_greedy_filter
 # from methods.maranzana import run_maranzana
 # from methods.random_swap import run_random_swap
 # from methods.sa import run_SA
 from methods.gurobi import run_gurobi
 from methods.ppo_swap import run_ppo_swap
+from methods.ppo_filter import run_ppo_filter
 from results import save_avg, save_pmp_results
 from utils import get_config
 
 
 def run_pmp_graph(config):
     data_path = config['data_path']
-    dataset = GraphDataset(data_path, "range(10,15)")
-    save_path = f"{data_path}/result_pmp_alpha_min/"
+    dataset = GraphDataset(data_path, "range(20,25)")
+    save_path = f"{data_path}/result_pmp_15_5/"
+    # dataset = GraphDataset(data_path, "range(8,10)")
+    # save_path = f"{data_path}/result_pmp8-10_先预测再过滤/"
 
     res_list = {}
 

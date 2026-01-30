@@ -121,12 +121,12 @@ class GraphImpDataset(GraphDataset):
                 open(f"{self.init_dir}/{city_id}_{p}.pkl", "rb")
             )
         else:
-            # init_facility = np.random.choice(
-            #     len(self.city_pops[city_id]), size=p, replace=False
-            # )
-
-            init_facility=TabuDensitySampling(exp=1).sample(city_pop[city_id], p, tabu_table[city_id])
-             # init_facility=TabuAlphaSampling(exp=1).sample(alpha[city_id], p, tabu_table[city_id])
+            init_facility = np.random.choice(
+                len(self.city_pops[city_id]), size=p, replace=False
+            )
+    
+            #init_facility=TabuDensitySampling(exp=1).sample(city_pop[city_id], p, tabu_table[city_id])
+            # init_facility=TabuAlphaSampling(exp=1).sample(alpha, p, tabu_table)
 
 
             pickle.dump(

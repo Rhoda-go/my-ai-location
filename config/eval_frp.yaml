@@ -1,10 +1,10 @@
-iter_num: &iter_num 60
+iter_num: &iter_num 100
 device: &device cuda:0
-reloc_coef: 0.75
+reloc_coef: 0.6
 
-#data_path: ./data/test_100_20/
+data_path: ./data/test_500_10/
 #data_path: ./data/test_1000_20/
-data_path: ./data/test_100_19/
+#data_path: ./data/test_30_1/
 #data_path: ./casedata/test_100_1/
 
 
@@ -14,27 +14,28 @@ methods:
     OutputFlag: 0
     MIPGap: 0
 
-  Greedy-swap:
-    run_fn: run_greedy_swap_reloc
+  Greedy-reloc:
+    run_fn: run_greedy_reloc
     iter_num:  *iter_num
 
-  # Random-swap:
-  #   run_fn: run_random_swap_reloc
-  #   iter_num: *iter_num
+  # Greedy-filter:
+  #   run_fn: run_greedy_filter_reloc
+  #   init_num: *iter_num
 
-  # BestResponse:
-  #   iter_num: *iter_num
-  #   run_fn: run_br
 
-  # FR2FP:
-  #   run_fn: run_FR2FP
 
   PPO-swap:
-    run_fn: run_ppo_swap_reloc
+    run_fn: run_ppo_reloc
     iter_num: *iter_num
-    
-    #ckpt: ./logs/20260121-154345/checkpoints/epoch=61-step=992.ckpt
-    #ckpt: ./logs/20260122-223736/checkpoints/epoch=173-step=2784.ckpt
+
     ckpt: ./logs/20260124-154826/checkpoints/epoch=286-step=4592.ckpt
     name: ppo_swap_test
     device: *device
+
+  # PPO-filter:
+  #   run_fn: run_ppo_filter_reloc
+  #   iter_num: *iter_num
+
+  #   ckpt: ./logs/20260124-154826/checkpoints/epoch=286-step=4592.ckpt
+  #   name: ppo_swap_test
+  #   device: *device

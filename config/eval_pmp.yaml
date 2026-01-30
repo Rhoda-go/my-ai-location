@@ -1,10 +1,12 @@
-init_num: &init_num 10
-iter_num: &iter_num 30
+init_num: &init_num 15  #调高效果好
+iter_num: &iter_num 5
+# init_num: &init_num 2
+# iter_num: &iter_num 2
 swap_num: &swap_num null
 device: &device cuda:0
 
-data_path: ./casedata/test_100_1/
-#data_path: ./data/test_100_19/
+#data_path: ./casedata/test_100_1/
+data_path: ./data/test_500_10/
 # data_path: ./data/test_200_20/
 #data_path: ./casedata/test_100_1/
 
@@ -16,6 +18,11 @@ methods:
 
   Greedy-swap:
     run_fn: run_greedy_swap
+    init_num: *init_num
+    swap_num: *swap_num
+
+  Greedy-filter:
+    run_fn: run_greedy_filter
     init_num: *init_num
     swap_num: *swap_num
 
@@ -41,11 +48,21 @@ methods:
     init_num: *init_num
     iter_num: *iter_num
     swap_num: *swap_num
-    
-    #ckpt: ./logs/20260106-061223/checkpoints/epoch=230-step=3696.ckpt  #100 "range(5, 26,5)"  swap_env
-    #ckpt: ./logs/20260121-101927/checkpoints/epoch=284-step=4560.ckpt  #100 "range(5, 10)"
-    # ckpt: ./logs/20260121-100822/checkpoints/epoch=66-step=1072.ckpt  #100 "range(5, 10)"
-    #ckpt: ./logs/20260121-154345/checkpoints/epoch=61-step=992.ckpt
+
     ckpt: ./logs/20260122-223736/checkpoints/epoch=173-step=2784.ckpt
     name: ppo_swap_test
     device: *device
+
+  PPO-filter:
+    run_fn: run_ppo_filter
+    init_num: *init_num
+    iter_num: *iter_num
+    swap_num: *swap_num
+    
+    ckpt: ./logs/20260122-223736/checkpoints/epoch=173-step=2784.ckpt
+    name: ppo_swap_test
+    device: *device
+
+
+  
+

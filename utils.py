@@ -101,7 +101,7 @@ class TabuDensitySampling:        #initial with tabu_table
         #print('city_pop_np',city_pop_np)
 
         tabu_table_np = np.array(tabu_table, dtype=int)
-        #print(tabu_table_np)
+        tabu_table_min = np.minimum(tabu_table_np, tabu_table_np.T)
     
 
 
@@ -122,7 +122,7 @@ class TabuDensitySampling:        #initial with tabu_table
             facility_list.append(selected)
 
             if len(facility_list) < p:
-                facility_rows = tabu_table_np[facility_list, :]
+                facility_rows = tabu_table_min[facility_list, :]
                 filter_mask = np.all(facility_rows == 1, axis=0)
                 filter_nodes = np.where(filter_mask)[0]
                 available_nodes = np.setdiff1d(filter_nodes, facility_list)
@@ -160,6 +160,7 @@ class TabuAlphaSampling:
         
         # 转换禁忌表
         tabu_table_np = np.array(tabu_table, dtype=int)
+        tabu_table_min = np.minimum(tabu_table_np, tabu_table_np.T)
         
         facility_list = []  
         available_nodes = np.arange(len(alpha_np))
@@ -188,7 +189,7 @@ class TabuAlphaSampling:
             # 如果还需要继续选择，更新可用节点
             if len(facility_list) < p:
                 # 获取已选设施的禁忌约束
-                facility_rows = tabu_table_np[facility_list, :]
+                facility_rows = tabu_table_min[facility_list, :]
                 # 找出满足所有已选设施约束的节点
                 filter_mask = np.all(facility_rows == 1, axis=0)
                 filter_nodes = np.where(filter_mask)[0]
