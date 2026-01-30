@@ -14,7 +14,7 @@ from utils import get_config
 def eval_frp(config):
     data_path = config['data_path']   
     reloc_coef = config['reloc_coef']
-    dataset = GraphImpDataset(data_path, "range(20,25)")
+    dataset = GraphImpDataset(data_path, "range(15,20)")
     save_path = f"{data_path}/results_frp_{reloc_coef}_100/"
     # dataset = GraphImpDataset(data_path, "range(9,11)")
     # save_path = f"{data_path}/results_frp_{reloc_coef}"

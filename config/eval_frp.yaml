@@ -1,6 +1,6 @@
 iter_num: &iter_num 100
 device: &device cuda:0
-reloc_coef: 0.6
+reloc_coef: 0.5
 
 data_path: ./data/test_500_10/
 #data_path: ./data/test_1000_20/
