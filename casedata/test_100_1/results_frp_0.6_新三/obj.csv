@@ -1,0 +1,4 @@
+facility number,average,9,10,11
+Gurobi,3.13e+04,2.98e+04 $\pm$ 0,3.12e+04 $\pm$ 0,3.29e+04 $\pm$ 0
+Greedy-reloc,3.13e+04,2.98e+04 $\pm$ 0,3.12e+04 $\pm$ 0,3.29e+04 $\pm$ 0
+PPO-swap,1.36e+04,9.78e+03 $\pm$ 0,1.11e+04 $\pm$ 0,2.01e+04 $\pm$ 0

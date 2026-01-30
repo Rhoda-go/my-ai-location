@@ -1,0 +1,4 @@
+facility number,average,9,10,11
+Gurobi,3.16e+04,3e+04 $\pm$ 0,3.15e+04 $\pm$ 0,3.33e+04 $\pm$ 0
+PPO-swap,2.86e+04,2.59e+04 $\pm$ 0,2.93e+04 $\pm$ 0,3.05e+04 $\pm$ 0
+PPO-filter,2.64e+04,2.59e+04 $\pm$ 0,2.79e+04 $\pm$ 0,2.56e+04 $\pm$ 0

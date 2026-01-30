@@ -5,6 +5,8 @@ import numpy as np
 
 from results import PMPSolution
 from utils import TabuDensitySampling, get_cost
+from utils import TabuAlphaSampling, get_cost
+
 
 
 class SwapSolver:
@@ -20,9 +22,9 @@ class SwapSolver:
         if swap_num is None:
             swap_num = p
         for _ in range(init_num):
-            tabu_table_min = np.minimum(tabu_table, tabu_table.T)
-            facility_list = TabuDensitySampling(exp=1).sample(city_pop, p, tabu_table_min)
-            print('facility_list',facility_list)
+            #tabu_table_min = np.minimum(tabu_table, tabu_table.T) 
+            facility_list = TabuAlphaSampling(exp=1).sample(city_pop, p, tabu_table)
+            #print('facility_list',facility_list)
             sol = self.solve_reloc(
                 city_pop, p, distance_m, facility_list, tabu_table,alpha,beta,reloc_step=swap_num, **kwargs
             )

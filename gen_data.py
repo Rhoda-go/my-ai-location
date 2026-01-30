@@ -9,7 +9,9 @@ import numpy as np
 
 def gen_gabriel_graph(data_path, seed, n, k1=3, k2=6):
 
-    SCALE_FACTOR = 5.0  # 1×1→10km×10km
+    #SCALE_FACTOR = 5.0  # 1×1→10km×10km
+    SCALE_FACTOR = 8.0  # 1×1→10km×10km 100 200 nodes
+    SCALE_FACTOR = 10.0  # 1×1→10km×10km 500 nodes
 
     class Edge:
         def __init__(self, start, end):
@@ -96,12 +98,16 @@ def gen_gabriel_graph(data_path, seed, n, k1=3, k2=6):
         
         
     # Generate attraction parameters
-    alpha = np.random.uniform(0, 0.6, n)  # initial basic coefficient
-    centrality_normalized = np.array(list(eigenvector_centrality.values())) / max(eigenvector_centrality.values())
-    alpha = alpha * (1+0.2 * centrality_normalized) #alpha bigger in more centralized area
+    #alpha = np.random.uniform(0, 0.6, n)  # initial basic coefficient
+    alpha = np.random.beta(a=1.2, b=8, size=n)
+    alpha = np.clip(alpha, 0.015, 0.86)
+    # centrality_normalized = np.array(list(eigenvector_centrality.values())) / max(eigenvector_centrality.values())
+    # alpha = alpha * (1+0.2 * centrality_normalized) #alpha bigger in more centralized area
 
-    beta = np.random.normal(1.5, 0.6, n)  # initial decay coefficient
-    beta = np.clip(beta, 0.3, 2.2)
+    # beta = np.random.normal(1.5, 0.6, n)  # initial decay coefficient
+    # beta = np.clip(beta, 0.3, 2.2)
+    beta = np.random.normal(0.32, 0.31, n)  # mean=0.32, std=0.31
+    beta = np.clip(beta, 0.05, 1.80)  # 基于实际最小值和最大值
     # pop_normalized = city_pop / city_pop.max()
     # beta = beta * (1 - 0.2 * pop_normalized)  #beta bigger in an area with more population
 
@@ -161,7 +167,7 @@ if __name__ == "__main__":
     # batch_gen("./data/test_200_20/", 200, 20)
     # batch_gen("./data/train_300_1000/", 300, 1000)
     # batch_gen("./data/test_300_20/", 300, 20)
-    batch_gen("./data/train_1000_1000/", 1000, 500)
-    batch_gen("./data/test_1000_20/", 1000, 20)
+    #batch_gen("./data/train_100_999/", 100, 999)
+    batch_gen("./data/test_500_10/", 500, 10)
 
 

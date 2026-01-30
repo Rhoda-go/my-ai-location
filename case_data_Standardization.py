@@ -14,7 +14,7 @@ def load_real_data(node_file, distance_file, output_path):
     nodes_df = pd.read_csv(node_file)
     
     # 检查必要列是否存在
-    required_columns = ['fence_id', 'center_lon', 'center_lat', 'alpha', 'beta', 'resident_population_5km']
+    required_columns = ['fence_id', 'center_lon', 'center_lat', 'alpha', 'beta', 'resident_population_2km']
     for col in required_columns:
         if col not in nodes_df.columns:
             raise ValueError(f"CSV文件中缺少必要列: {col}")
@@ -41,7 +41,7 @@ def load_real_data(node_file, distance_file, output_path):
     nodes_pos = nodes_df[['center_lon', 'center_lat']].values
     
     # 人口数据
-    city_pop = nodes_df['resident_population_5km'].values
+    city_pop = nodes_df['resident_population_2km'].values
     
     # alpha和beta参数
     alpha = nodes_df['alpha'].values
@@ -229,7 +229,7 @@ if __name__ == "__main__":
     # 3. 或者直接处理单个数据集
     print("\n处理单个真实数据集...")
     load_real_data(
-        node_file="./case_data/selected_fences_summary.csv",
-        distance_file="./case_data/selected_fence_pairwise_dist_km.csv",
-        output_path="./casedata/real_test"
+        node_file="./case_data/selected_fences_summary_k100.csv",
+        distance_file="./case_data/selected_fence_pairwise_dist_km_k100.csv",
+        output_path="./casedata/test_100_1/0"
     )

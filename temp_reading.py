@@ -182,7 +182,7 @@ import networkx as nx
 import numpy as np
 
 # 1. 配置路径和文件参数
-data_path = "./casedata/real_test"  # 替换成你的实际数据根目录
+data_path = "./data/test_30_1"  # 替换成你的实际数据根目录
 i = 0# 对应文件夹0（可修改）
 # 定义要读取的四个.pkl文件名
 file_names = [
