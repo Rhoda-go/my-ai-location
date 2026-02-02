@@ -11,7 +11,11 @@ def gen_gabriel_graph(data_path, seed, n, k1=3, k2=6):
 
     #SCALE_FACTOR = 5.0  # 1×1→10km×10km
     SCALE_FACTOR = 8.0  # 1×1→10km×10km 100 200 nodes
+<<<<<<< HEAD
     SCALE_FACTOR = 10.0  # 1×1→10km×10km 500 nodes
+=======
+    #SCALE_FACTOR = 10.0  # 1×1→10km×10km 500 nodes
+>>>>>>> lx
 
     class Edge:
         def __init__(self, start, end):
@@ -168,6 +172,10 @@ if __name__ == "__main__":
     # batch_gen("./data/train_300_1000/", 300, 1000)
     # batch_gen("./data/test_300_20/", 300, 20)
     #batch_gen("./data/train_100_999/", 100, 999)
+<<<<<<< HEAD
     batch_gen("./data/test_500_10/", 500, 10)
+=======
+    batch_gen("./data/train_100_1000/", 100, 1000)
+>>>>>>> lx
 
 

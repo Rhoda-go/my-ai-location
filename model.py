@@ -30,10 +30,103 @@ def collate_fn_ppo(batch):
     advs = torch.as_tensor(advs, dtype=torch.float).unsqueeze(-1)
     return (new_states, actions, logp_olds, v_olds, qvals, advs)
 
+<<<<<<< HEAD
 
 
 class GraphFeatureExtractor(nn.Module):
     def __init__(self, c_in, c_hidden, c_out, num_layers=2, layer_name="GCN", **kwargs):
+=======
+class HierarchicalGraph(nn.Module):
+    """
+    门控、残差、归一化
+    """
+    def __init__(self, c_in, c_hidden, c_out, num_layers=2, num_heads=4, 
+                 layer_name="GraphConv", dropout=0.1, **kwargs):
+        super().__init__()
+        
+        self.c_hidden = c_hidden
+        
+        # 1. 输入嵌入
+        self.input_embedding = nn.Linear(c_in, c_hidden)
+        
+        # 2. GNN主干
+        gnn_layer_class = getattr(geom_nn, layer_name)
+        heads_supported = layer_name in ["GATConv", "GATv2Conv", "TransformerConv"]
+        
+        self.convs = nn.ModuleList()
+        self.norms = nn.ModuleList()
+        
+        for _ in range(num_layers):
+            if heads_supported:
+                conv = gnn_layer_class(
+                    c_hidden, c_hidden,
+                    heads=num_heads,
+                    concat=False,
+                    dropout=dropout,
+                    add_self_loops=True
+                )
+            else:
+                conv = gnn_layer_class(c_hidden, c_hidden)
+            
+            self.convs.append(conv)
+            # 改用LayerNorm（对每个样本独立归一化）
+            self.norms.append(nn.LayerNorm(c_hidden))
+        
+        # 3. 简化的全局特征（移除过度复杂的MLP）
+        self.global_transform = nn.Linear(c_hidden * 2, c_hidden)
+        
+        # 4. 改进的融合机制（加性 + 可学习权重）
+        self.fusion_weight = nn.Parameter(torch.tensor(0.2))  # 初始化为0.2
+        
+        # 5. 输出层（简化）
+        self.output_layer = nn.Sequential(
+            nn.Linear(c_hidden, c_out),
+            nn.ReLU()
+        )
+        
+        # self.apply(self._init_weights)
+    
+    # def _init_weights(self, module):
+    #     if isinstance(module, nn.Linear):
+    #         # 使用Xavier初始化（比正交初始化更稳定）
+    #         nn.init.xavier_uniform_(module.weight, gain=1.0)
+    #         if module.bias is not None:
+    #             nn.init.constant_(module.bias, 0)
+    
+    def forward(self, x, edge_index, edge_attr=None, batch=None):
+        if batch is None:
+            batch = torch.zeros(x.size(0), dtype=torch.long, device=x.device)
+        
+        # 1. 输入嵌入
+        x = self.input_embedding(x)
+        
+        # 2. GNN传播（强残差连接）
+        for conv, norm in zip(self.convs, self.norms):
+            x_res = x
+            x = conv(x, edge_index)
+            x = norm(x)
+            x = torch.relu(x)
+            x = x + x_res  # 1:1残差，不衰减
+        
+        # # 3. 全局特征聚合
+        # graph_mean = geom_nn.global_mean_pool(x, batch)
+        # graph_max = geom_nn.global_max_pool(x, batch)
+        # graph_feat = torch.cat([graph_mean, graph_max], dim=-1)
+        # graph_feat = torch.tanh(self.global_transform(graph_feat))  # Tanh限制范围
+        
+        # # 4. 加性融合（而非门控）
+        # # 使用可学习的权重，避免门控的过度抑制
+        # x = x + torch.clamp(self.fusion_weight, 0, 0.5) * graph_feat[batch]
+        
+        # 5. 输出
+        x = self.output_layer(x)
+        
+        return x
+
+
+class GraphFeatureExtractor(nn.Module):
+    def __init__(self, c_in, c_hidden, c_out, num_layers=2,num_heads=4, layer_name="GCN", **kwargs):
+>>>>>>> lx
         super().__init__()
 
         gnn_layer = getattr(geom_nn, layer_name)
@@ -98,7 +191,11 @@ class MLP(nn.Module):
 
 class ActorCritic(nn.Module):
     def __init__(
+<<<<<<< HEAD
         self, fac_c_in, c_hidden, c_out, num_layers, layer_name, **kwargs
+=======
+        self, fac_c_in, c_hidden, c_out, num_layers,num_heads, layer_name, **kwargs
+>>>>>>> lx
     ) -> None:
         super().__init__()
         '''
@@ -120,6 +217,7 @@ class ActorCritic(nn.Module):
         # if "heads" not in kwargs:
         #     kwargs["heads"] = 1
         # emb_size = c_out * kwargs["heads"] * 2
+<<<<<<< HEAD
 
         self.actor_gnn = GraphFeatureExtractor(
             fac_c_in, c_hidden, c_out, num_layers, layer_name, **kwargs
@@ -130,6 +228,27 @@ class ActorCritic(nn.Module):
         self.critic_gnn = GraphFeatureExtractor(
             fac_c_in, c_hidden, c_out, num_layers, layer_name, **kwargs
         )
+=======
+        
+        self.actor_gnn = HierarchicalGraph(
+            fac_c_in, c_hidden, c_out, num_layers, num_heads, layer_name, **kwargs
+        )
+        
+        self.critic_gnn = HierarchicalGraph(
+            fac_c_in, c_hidden, c_out, num_layers, num_heads, layer_name, **kwargs
+        )
+        
+
+        # self.actor_gnn = GraphFeatureExtractor(
+            # fac_c_in, c_hidden, c_out, num_layers, layer_name, **kwargs
+        # )
+        self.actor_prob = MLP(emb_size, c_hidden, 1, num_layers)
+        self.att = nn.Linear(emb_size, emb_size, bias=False)
+
+        # self.critic_gnn = GraphFeatureExtractor(
+            # fac_c_in, c_hidden, c_out, num_layers, layer_name, **kwargs
+        # )
+>>>>>>> lx
         self.critic = MLP(emb_size, c_hidden, 1, num_layers)
 
     def actor_forward(self, state, action1=None):
@@ -166,6 +285,7 @@ class ActorCritic(nn.Module):
         '''
         filtered by tabu_table
         '''
+<<<<<<< HEAD
         mask_tabu = (tabu_table == 1)  # [batch, nodes, nodes]
         mask2 = mask.clone()  # [batch, nodes]
         
@@ -196,6 +316,26 @@ class ActorCritic(nn.Module):
         # '''
         # mask2 = torch.where(mask, 0, -float("inf"))
         # logits2 = act_scores2 + mask2
+=======
+        # mask_tabu = (tabu_table == 1)  # [batch, nodes, nodes]
+        # mask2 = mask.clone()  # [batch, nodes]
+        
+        # batch_size = mask2.shape[0]
+        
+        # for i in range(batch_size):
+        #     sample_mask = mask2[i]  # [nodes]
+        #     candidate_indices = torch.where(sample_mask == 0)[0] # candidate_indices for batch i（where mask=0）
+
+        #     for idx in candidate_indices:
+        #         tabu_row = mask_tabu[i, idx]  # [nodes]
+        #         sample_mask = sample_mask & tabu_row #true&true=true，true&false=false
+            
+        #     # update
+        #     mask2[i] = sample_mask
+                
+        # logits_mask = torch.where(mask2, 0, -float("inf"))
+        # logits2 = act_scores2 + logits_mask
+>>>>>>> lx
         # pi2 = Categorical(logits=logits2)
         # action2 = pi2.sample()
 
@@ -203,6 +343,21 @@ class ActorCritic(nn.Module):
         # action = torch.stack([action1, action2], dim=1).squeeze(0)
         # return Categorical(logits=logits), action
 
+<<<<<<< HEAD
+=======
+        # '''
+        # original
+        # '''
+        mask2 = torch.where(mask, 0, -float("inf"))
+        logits2 = act_scores2 + mask2
+        pi2 = Categorical(logits=logits2)
+        action2 = pi2.sample()
+
+        logits = torch.stack([logits1, logits2], dim=1).squeeze(0)
+        action = torch.stack([action1, action2], dim=1).squeeze(0)
+        return Categorical(logits=logits), action
+
+>>>>>>> lx
     def critic_forward(self, state):
         batch_fac = state["fac_data"]
         emb_fac = self.critic_gnn(

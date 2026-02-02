@@ -608,9 +608,15 @@ class PPOSwapSolver(SwapSolver):
         best_sol.time = time.time() - start
         # print(city_pop)
         #print("facility_lists[np.arange(self.iter_num)",facility_lists[np.arange(self.iter_num)])
+<<<<<<< HEAD
         print('best_facility',best_sol.facility_list)
         print(best_sol.cost)
         print('reloc_step',reloc_step)
+=======
+        # print('best_facility',best_sol.facility_list)
+        # print(best_sol.cost)
+        # print('reloc_step',reloc_step)
+>>>>>>> lx
  
         return (best_sol)
 

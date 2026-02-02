@@ -28,7 +28,12 @@ methods:
     run_fn: run_ppo_reloc
     iter_num: *iter_num
 
+<<<<<<< HEAD
     ckpt: ./logs/20260124-154826/checkpoints/epoch=286-step=4592.ckpt
+=======
+   # ckpt: ./logs/20260122-223736/checkpoints/epoch=173-step=2784.ckpt #ppo
+    ckpt: ./logs/20260131-134620/checkpoints/epoch=284-step=4560.ckpt #ppo_lx
+>>>>>>> lx
     name: ppo_swap_test
     device: *device
 
@@ -36,6 +41,11 @@ methods:
   #   run_fn: run_ppo_filter_reloc
   #   iter_num: *iter_num
 
+<<<<<<< HEAD
   #   ckpt: ./logs/20260124-154826/checkpoints/epoch=286-step=4592.ckpt
+=======
+  #  # ckpt: ./logs/20260122-223736/checkpoints/epoch=173-step=2784.ckpt #ppo
+  #   ckpt: ./logs/20260130-223033/checkpoints/epoch=235-step=3776.ckpt #ppo_lx
+>>>>>>> lx
   #   name: ppo_swap_test
   #   device: *device

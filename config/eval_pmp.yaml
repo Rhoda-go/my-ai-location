@@ -6,8 +6,13 @@ swap_num: &swap_num null
 device: &device cuda:0
 
 #data_path: ./casedata/test_100_1/
+<<<<<<< HEAD
 data_path: ./data/test_500_10/
 # data_path: ./data/test_200_20/
+=======
+#data_path: ./data/test_100_19/
+data_path: ./data/test_200_20/
+>>>>>>> lx
 #data_path: ./casedata/test_100_1/
 
 methods:
@@ -49,7 +54,15 @@ methods:
     iter_num: *iter_num
     swap_num: *swap_num
 
+<<<<<<< HEAD
     ckpt: ./logs/20260122-223736/checkpoints/epoch=173-step=2784.ckpt
+=======
+    # ckpt: ./logs/20260122-223736/checkpoints/epoch=173-step=2784.ckpt #ppo
+    
+    ckpt: ./logs/20260202-094055/checkpoints/epoch=274-step=4400.ckpt #ppo_lx5
+    # ckpt: ./logs/20260131-134620/checkpoints/epoch=284-step=4560.ckpt #ppo_lx3
+
+>>>>>>> lx
     name: ppo_swap_test
     device: *device
 
@@ -59,7 +72,14 @@ methods:
     iter_num: *iter_num
     swap_num: *swap_num
     
+<<<<<<< HEAD
     ckpt: ./logs/20260122-223736/checkpoints/epoch=173-step=2784.ckpt
+=======
+    # ckpt: ./logs/20260122-223736/checkpoints/epoch=173-step=2784.ckpt #ppo
+    
+    ckpt: ./logs/20260202-094055/checkpoints/epoch=274-step=4400.ckpt #ppo_lx5
+    # ckpt: ./logs/20260131-134620/checkpoints/epoch=284-step=4560.ckpt #ppo_lx3
+>>>>>>> lx
     name: ppo_swap_test
     device: *device
 
