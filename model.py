@@ -11,8 +11,7 @@ from torch.utils.data import DataLoader, IterableDataset
 
 from swap_env import SwapEnv
 from utils import to_device
-from torch_geometric.utils import get_laplacian, to_scipy_sparse_matrix
-import scipy.sparse as sp
+
 
 def collate_fn_ppo(batch):
     states, actions, logp_olds, v_olds, qvals, advs = zip(*batch)
@@ -31,236 +30,96 @@ def collate_fn_ppo(batch):
     advs = torch.as_tensor(advs, dtype=torch.float).unsqueeze(-1)
     return (new_states, actions, logp_olds, v_olds, qvals, advs)
 
-class HierarchicalGraphTransformer(nn.Module):
+class HierarchicalGraph(nn.Module):
     """
-    分层图Transformer（无边特征版本）
-    特点：
-    1. 局部图卷积 + 全局Transformer
-    2. 结构位置编码
-    3. 虚拟全局节点
-    4. 支持多种GNN层（GAT, GCN, GraphSAGE, TransformerConv等）
+    门控、残差、归一化
     """
-    def __init__(self, c_in, c_hidden, c_out, num_layers=3, num_heads=4, 
-                 layer_name="GATv2Conv", dropout=0.1, use_edge_attr=False, **kwargs):
+    def __init__(self, c_in, c_hidden, c_out, num_layers=2, num_heads=4, 
+                 layer_name="GraphConv", dropout=0.1, **kwargs):
         super().__init__()
         
-        self.num_layers = num_layers
         self.c_hidden = c_hidden
-        self.use_edge_attr = use_edge_attr
         
-        # 输入嵌入
+        # 1. 输入嵌入
         self.input_embedding = nn.Linear(c_in, c_hidden)
         
-        # 结构位置编码（拉普拉斯特征向量）
-        self.use_pos_encoding = True
-        if self.use_pos_encoding:
-            self.pos_encoder = nn.Linear(8, c_hidden)  # 使用前8个特征向量
-        
-        # 虚拟全局节点嵌入
-        self.global_node = nn.Parameter(torch.randn(1, c_hidden))
-        
-        # 局部图卷积层（移除edge_dim参数）
+        # 2. GNN主干
         gnn_layer_class = getattr(geom_nn, layer_name)
+        heads_supported = layer_name in ["GATConv", "GATv2Conv", "TransformerConv"]
         
-        # 根据不同的GNN层类型，使用不同的参数
-        self.local_convs = nn.ModuleList()
+        self.convs = nn.ModuleList()
+        self.norms = nn.ModuleList()
+        
         for _ in range(num_layers):
-            if layer_name in ["GATConv", "GATv2Conv"]:
-                # GAT系列：
-                self.local_convs.append(
-                    gnn_layer_class(
-                        in_channels=c_hidden,
-                        out_channels=c_hidden,  
-                        heads=num_heads,
-                        concat=False,  # False时输出是c_hidden，True时是c_hidden*heads
-                        dropout=dropout,
-                        add_self_loops=True,
-                        bias=True
-                    )
-                )
-            elif layer_name == "TransformerConv":
-                # TransformerConv：支持heads
-                self.local_convs.append(
-                    gnn_layer_class(
-                        c_hidden, 
-                        c_hidden, 
-                        heads=num_heads, 
-                        concat=False,
-                        dropout=dropout
-                    )
-                )
-            elif layer_name == "GCNConv":
-                # GCN：不支持heads
-                self.local_convs.append(
-                    gnn_layer_class(c_hidden, c_hidden)
-                )
-            elif layer_name == "GraphConv":
-                # GraphConv：不支持heads
-                self.local_convs.append(
-                    gnn_layer_class(c_hidden, c_hidden)
-                )
-            elif layer_name == "SAGEConv":
-                # SAGE：不支持heads
-                self.local_convs.append(
-                    gnn_layer_class(c_hidden, c_hidden)
+            if heads_supported:
+                conv = gnn_layer_class(
+                    c_hidden, c_hidden,
+                    heads=num_heads,
+                    concat=False,
+                    dropout=dropout,
+                    add_self_loops=True
                 )
             else:
-                # 默认：尝试不带额外参数
-                self.local_convs.append(
-                    gnn_layer_class(c_hidden, c_hidden)
-                )
+                conv = gnn_layer_class(c_hidden, c_hidden)
+            
+            self.convs.append(conv)
+            # 改用LayerNorm（对每个样本独立归一化）
+            self.norms.append(nn.LayerNorm(c_hidden))
         
-        # 全局Transformer层
-        encoder_layer = nn.TransformerEncoderLayer(
-            d_model=c_hidden,
-            nhead=num_heads,
-            dim_feedforward=c_hidden * 4,
-            dropout=dropout,
-            batch_first=True
-        )
-        self.global_transformer = nn.TransformerEncoder(
-            encoder_layer, num_layers=num_layers
-        )
+        # 3. 简化的全局特征（移除过度复杂的MLP）
+        self.global_transform = nn.Linear(c_hidden * 2, c_hidden)
         
-        # 层归一化
-        self.local_norms = nn.ModuleList([
-            nn.LayerNorm(c_hidden) for _ in range(num_layers)
-        ])
+        # 4. 改进的融合机制（加性 + 可学习权重）
+        self.fusion_weight = nn.Parameter(torch.tensor(0.2))  # 初始化为0.2
         
-        # Dropout层
-        self.dropouts = nn.ModuleList([
-            nn.Dropout(dropout) for _ in range(num_layers)
-        ])
-        
-        # 输出层
+        # 5. 输出层（简化）
         self.output_layer = nn.Sequential(
-            nn.Linear(c_hidden, c_hidden),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(c_hidden, c_out)
+            nn.Linear(c_hidden, c_out),
+            nn.ReLU()
         )
         
-    def compute_laplacian_pe(self, edge_index, num_nodes, k=8):
-        """计算拉普拉斯位置编码"""
-        from torch_geometric.utils import get_laplacian, to_scipy_sparse_matrix
-        import scipy.sparse as sp
-        
-        try:
-            edge_index, edge_weight = get_laplacian(
-                edge_index, 
-                normalization='sym', 
-                num_nodes=num_nodes
-            )
-            L = to_scipy_sparse_matrix(edge_index, edge_weight, num_nodes)
-            
-            # 计算特征向量
-            # 如果节点数小于k，调整k的值
-            k = min(k, num_nodes - 2)
-            if k < 1:
-                return None
-            
-            eig_vals, eig_vecs = sp.linalg.eigsh(L, k=k, which='SM')
-            pe = torch.from_numpy(eig_vecs).float()
-            
-            # 如果特征向量数量不足8，进行padding
-            if pe.size(1) < 8:
-                padding = torch.zeros(num_nodes, 8 - pe.size(1))
-                pe = torch.cat([pe, padding], dim=1)
-            
-            return pe
-        except Exception as e:
-            print(f"Warning: Failed to compute Laplacian PE: {e}")
-            return None
+        # self.apply(self._init_weights)
+    
+    # def _init_weights(self, module):
+    #     if isinstance(module, nn.Linear):
+    #         # 使用Xavier初始化（比正交初始化更稳定）
+    #         nn.init.xavier_uniform_(module.weight, gain=1.0)
+    #         if module.bias is not None:
+    #             nn.init.constant_(module.bias, 0)
     
     def forward(self, x, edge_index, edge_attr=None, batch=None):
-        """
-        Args:
-            x: 节点特征 [num_nodes, c_in]
-            edge_index: 边索引 [2, num_edges]
-            edge_attr: 边特征（可选，不使用）
-            batch: 批次索引 [num_nodes]
+        if batch is None:
+            batch = torch.zeros(x.size(0), dtype=torch.long, device=x.device)
         
-        Returns:
-            输出特征 [num_nodes, c_out]
-        """
-        num_nodes = x.size(0)
-        
-        # 输入嵌入
+        # 1. 输入嵌入
         x = self.input_embedding(x)
         
-        # 添加位置编码
-        if self.use_pos_encoding:
-            pe = self.compute_laplacian_pe(edge_index, num_nodes)
-            if pe is not None:
-                x = x + self.pos_encoder(pe.to(x.device))
-        
-        # 局部图卷积
-        for i, (conv, norm, dropout) in enumerate(
-            zip(self.local_convs, self.local_norms, self.dropouts)
-        ):
+        # 2. GNN传播（强残差连接）
+        for conv, norm in zip(self.convs, self.norms):
             x_res = x
-            
-            # GNN传播（不使用edge_attr）
-            if isinstance(conv, (geom_nn.GATConv, geom_nn.GATv2Conv, geom_nn.TransformerConv)):
-                # 这些层可能支持edge_attr，但我们不传递
-                x = conv(x, edge_index)
-            else:
-                # 其他层直接传递
-                x = conv(x, edge_index)
-            
-            # 残差连接 + 归一化 + dropout
-            x = norm(x + x_res)
-            x = dropout(x)
+            x = conv(x, edge_index)
+            x = norm(x)
+            x = torch.relu(x)
+            x = x + x_res  # 1:1残差，不衰减
         
-        # 准备全局Transformer输入
-        if batch is None:
-            batch = torch.zeros(num_nodes, dtype=torch.long, device=x.device)
+        # # 3. 全局特征聚合
+        # graph_mean = geom_nn.global_mean_pool(x, batch)
+        # graph_max = geom_nn.global_max_pool(x, batch)
+        # graph_feat = torch.cat([graph_mean, graph_max], dim=-1)
+        # graph_feat = torch.tanh(self.global_transform(graph_feat))  # Tanh限制范围
         
-        batch_size = batch.max().item() + 1
+        # # 4. 加性融合（而非门控）
+        # # 使用可学习的权重，避免门控的过度抑制
+        # x = x + torch.clamp(self.fusion_weight, 0, 0.5) * graph_feat[batch]
         
-        # 为每个图添加虚拟全局节点
-        global_nodes = self.global_node.expand(batch_size, -1)
-        
-        # 按batch组织节点特征
-        x_batched = []
-        for i in range(batch_size):
-            mask = (batch == i)
-            graph_nodes = x[mask]
-            # 添加全局节点
-            graph_with_global = torch.cat([global_nodes[i:i+1], graph_nodes], dim=0)
-            x_batched.append(graph_with_global)
-        
-        # Padding到相同长度
-        max_len = max(t.size(0) for t in x_batched)
-        x_padded = torch.zeros(batch_size, max_len, self.c_hidden, device=x.device)
-        padding_mask = torch.ones(batch_size, max_len, dtype=torch.bool, device=x.device)
-        
-        for i, graph_x in enumerate(x_batched):
-            length = graph_x.size(0)
-            x_padded[i, :length] = graph_x
-            padding_mask[i, :length] = False
-        
-        # 全局Transformer
-        x_global = self.global_transformer(x_padded, src_key_padding_mask=padding_mask)
-        
-        # 提取节点特征（去除全局节点和padding）
-        x_output = []
-        for i in range(batch_size):
-            mask = (batch == i)
-            num_graph_nodes = mask.sum().item()
-            x_output.append(x_global[i, 1:num_graph_nodes+1])  # 跳过全局节点
-        
-        x = torch.cat(x_output, dim=0)
-        
-        # 输出
+        # 5. 输出
         x = self.output_layer(x)
         
         return x
 
 
-
 class GraphFeatureExtractor(nn.Module):
-    def __init__(self, c_in, c_hidden, c_out, num_layers=2, layer_name="GCN", **kwargs):
+    def __init__(self, c_in, c_hidden, c_out, num_layers=2,num_heads=4, layer_name="GCN", **kwargs):
         super().__init__()
 
         gnn_layer = getattr(geom_nn, layer_name)
@@ -285,7 +144,7 @@ class GraphFeatureExtractor(nn.Module):
                 gnn_layer(in_channels, out_channels, **kwargs),
                 nn.ReLU(inplace=True),
             ]
-            #in_channels = c_hidden * kwargs["heads"]
+            #in_channels = c_hidden * kwargs["heads"]å
 
             '''
             根据ai修改的代码，修改上一行
@@ -323,10 +182,9 @@ class MLP(nn.Module):
         return self.layers(x)
 
 
-
 class ActorCritic(nn.Module):
     def __init__(
-        self, fac_c_in, c_hidden, c_out, num_layers, num_heads, layer_name, **kwargs
+        self, fac_c_in, c_hidden, c_out, num_layers,num_heads, layer_name, **kwargs
     ) -> None:
         super().__init__()
         '''
@@ -349,24 +207,24 @@ class ActorCritic(nn.Module):
         #     kwargs["heads"] = 1
         # emb_size = c_out * kwargs["heads"] * 2
         
-        self.actor_gnn = HierarchicalGraphTransformer(
+        self.actor_gnn = HierarchicalGraph(
             fac_c_in, c_hidden, c_out, num_layers, num_heads, layer_name, **kwargs
         )
         
-        self.critic_gnn = HierarchicalGraphTransformer(
+        self.critic_gnn = HierarchicalGraph(
             fac_c_in, c_hidden, c_out, num_layers, num_heads, layer_name, **kwargs
         )
         
+
         # self.actor_gnn = GraphFeatureExtractor(
-        #     fac_c_in, c_hidden, c_out, num_layers, layer_name, **kwargs
-        # )
-        # self.critic_gnn = GraphFeatureExtractor(
-        #     fac_c_in, c_hidden, c_out, num_layers, layer_name, **kwargs
+            # fac_c_in, c_hidden, c_out, num_layers, layer_name, **kwargs
         # )
         self.actor_prob = MLP(emb_size, c_hidden, 1, num_layers)
         self.att = nn.Linear(emb_size, emb_size, bias=False)
 
-
+        # self.critic_gnn = GraphFeatureExtractor(
+            # fac_c_in, c_hidden, c_out, num_layers, layer_name, **kwargs
+        # )
         self.critic = MLP(emb_size, c_hidden, 1, num_layers)
 
     def actor_forward(self, state, action1=None):
@@ -399,37 +257,40 @@ class ActorCritic(nn.Module):
         act_scores2 = act_scores2[torch.arange(act_scores2.shape[0]), batch]
         act_scores2 = act_scores2.reshape(pooling.shape[0], -1)
         
-        # #过滤逻辑，但是这是单个样本的处理逻辑，需要改成批量操作的逻辑
-        # mask_tabu=(tabu_table == 1)      # torch.bool 
-        # mask2 = copy.deepcopy(mask)
-        # print('mask2',len(mask2))
-        # candidate_indices = torch.where(mask2 == 0)[0]  # selected location index
-      
-        # if len(candidate_indices) > 0:
-        #     for idx in candidate_indices:
-        #         tabu_row = mask_tabu[idx] 
-        #         mask2 = mask2 & tabu_row  #true&true=true，true&false=false
+  
         '''
         filtered by tabu_table
         '''
-        mask_tabu = (tabu_table == 1)  # [batch, nodes, nodes]
-        mask2 = mask.clone()  # [batch, nodes]
+        # mask_tabu = (tabu_table == 1)  # [batch, nodes, nodes]
+        # mask2 = mask.clone()  # [batch, nodes]
         
-        batch_size = mask2.shape[0]
+        # batch_size = mask2.shape[0]
         
-        for i in range(batch_size):
-            sample_mask = mask2[i]  # [nodes]
-            candidate_indices = torch.where(sample_mask == 0)[0] # candidate_indices for batch i（where mask=0）
+        # for i in range(batch_size):
+        #     sample_mask = mask2[i]  # [nodes]
+        #     candidate_indices = torch.where(sample_mask == 0)[0] # candidate_indices for batch i（where mask=0）
 
-            for idx in candidate_indices:
-                tabu_row = mask_tabu[i, idx]  # [nodes]
-                sample_mask = sample_mask & tabu_row #true&true=true，true&false=false
+        #     for idx in candidate_indices:
+        #         tabu_row = mask_tabu[i, idx]  # [nodes]
+        #         sample_mask = sample_mask & tabu_row #true&true=true，true&false=false
             
-            # update
-            mask2[i] = sample_mask
+        #     # update
+        #     mask2[i] = sample_mask
                 
-        logits_mask = torch.where(mask2, 0, -float("inf"))
-        logits2 = act_scores2 + logits_mask
+        # logits_mask = torch.where(mask2, 0, -float("inf"))
+        # logits2 = act_scores2 + logits_mask
+        # pi2 = Categorical(logits=logits2)
+        # action2 = pi2.sample()
+
+        # logits = torch.stack([logits1, logits2], dim=1).squeeze(0)
+        # action = torch.stack([action1, action2], dim=1).squeeze(0)
+        # return Categorical(logits=logits), action
+
+        # '''
+        # original
+        # '''
+        mask2 = torch.where(mask, 0, -float("inf"))
+        logits2 = act_scores2 + mask2
         pi2 = Categorical(logits=logits2)
         action2 = pi2.sample()
 

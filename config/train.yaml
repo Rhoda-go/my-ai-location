@@ -2,11 +2,11 @@ ppo:
     gamma: 0.99
     lam: 0.95
     lr: 0.005
-    lr_gamma: 0.995
+    lr_gamma: 0.99
     batch_size: 64
     steps_per_epoch: 1024
     nb_optim_iters: 4
-    clip_ratio: 0.1
+    clip_ratio: 0.2
     clip_decay: 0.998
     ent_weight: 0.01
     critic_weight: 0.5
@@ -16,14 +16,15 @@ ppo:
         c_hidden: 128
         c_out: 128
         num_layers: 3
-        num_heads: 4
-        layer_name: GATv2Conv
+        num_heads: 8
+        layer_name: GraphConv #GraphConv GATConv GATv2Conv TransformerConv
+        dropout: 0.0
         #edge_dim: 1
         #heads: 1
-    data_path: ./data/train_100_100/
+    data_path: ./data/train_100_1000/
 
 ppo_trainer:
-    max_epochs: 50
+    max_epochs: 300
     accelerator: gpu
     devices: 1
     #auto_select_gpus: False

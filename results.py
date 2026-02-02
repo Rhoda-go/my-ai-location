@@ -41,10 +41,10 @@ def save_avg(sol_path, dataset, optmial_path, reloc=None):
 
         costs.setdefault(p, []).append(sol.cost)
         rtimes.setdefault(p, []).append(sol.time)
-        gaps.setdefault(p, []).append((sol.cost - opt_sol.cost) / opt_sol.cost)
+        gaps.setdefault(p, []).append(( opt_sol.cost- sol.cost) / opt_sol.cost)
         if reloc:
             ori_sol = pickle.load(open(reloc + f"/{city_id}_{p}.pkl", "rb"))
-            imps.setdefault(p, []).append((ori_sol.cost - sol.cost) / ori_sol.cost)
+            imps.setdefault(p, []).append(( sol.cost- ori_sol.cost) / ori_sol.cost)
 
     avg_cost, avg_rtime, avg_gap, avg_imp = {}, {}, {}, {}
     std_cost, std_rtime, std_gap, std_imp = {}, {}, {}, {}
@@ -84,7 +84,7 @@ def calculate_gap(y, optimal, facility_range):
     gap = {}
     for k in facility_range:
         gap[k] = (
-            0 if math.isclose(y[k], optimal[k]) else ((y[k] - optimal[k]) / optimal[k])
+            0 if math.isclose(y[k], optimal[k]) else (( optimal[k]-y[k]) / optimal[k])
         )
     return gap
 
@@ -95,7 +95,7 @@ def calculate_imp(y, original, facility_range):
         imp[k] = (
             0
             if math.isclose(y[k], original[k])
-            else ((original[k] - y[k]) / original[k])
+            else (( y[k]-original[k]) / original[k])
         )
     return imp
 

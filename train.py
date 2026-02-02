@@ -23,7 +23,9 @@ def train_ppo(config):
     # if os.path.exists(f"{log_path}/{log_name}/checkpoints"):
     #     print(f"{log_path}/{log_name} already exists")
     #     return
-    
+    '''
+    修改的地方
+    '''
     ckpt_dir = f"{log_path}/{log_name}/checkpoints"
     if os.path.exists(ckpt_dir):
         print(f"{ckpt_dir} already exists")
@@ -38,7 +40,7 @@ def train_ppo(config):
     )
     checkpoint_callback = ModelCheckpoint(
         dirpath=ckpt_dir, save_top_k=1, monitor="hp/avg_ep_reward", mode="max", save_last=True
-    )
+    ) #还有这里添加
     trainer = Trainer(
         callbacks=[LearningRateMonitor(), checkpoint_callback],
         logger=tb_logger,

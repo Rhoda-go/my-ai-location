@@ -72,6 +72,109 @@
 #     else:
 #         print(data) 
 
+
+
+
+# import pickle
+# import os
+# import matplotlib.pyplot as plt
+# import networkx as nx
+# import numpy as np
+
+# # 1. 配置路径和文件参数
+# data_path = "./data/train_100_500"  # 替换成你的实际数据根目录
+# i = 60 # 对应文件夹0（可修改）
+# # 定义要读取的四个.pkl文件名
+# file_names = [
+#     "distance_m.pkl",
+#     "attraction_params.pkl",
+#     "graph.pkl",
+#     "tabu_table.pkl"
+# ]
+
+# # 2. 批量读取文件并存储数据
+# all_data = {}
+# for file_name in file_names:
+#     # 拼接完整文件路径
+#     file_path = os.path.join(data_path, str(i), file_name)
+#     # 检查文件是否存在
+#     if not os.path.exists(file_path):
+#         print(f"警告：文件 {file_path} 不存在，跳过该文件")
+#         continue
+#     # 读取文件
+#     with open(file_path, "rb") as f:
+#         data = pickle.load(f)
+#     all_data[file_name] = data
+
+# # 3. 逐个查看数据的详细信息
+# for fname, data in all_data.items():
+#     print(f"\n========== {fname} 的数据信息 ==========")
+#     print(f"数据类型：{type(data)}")
+    
+#     # 针对numpy数组的特殊处理
+#     if isinstance(data, np.ndarray):
+#         print(f"数组形状：{data.shape}")
+#         print(f"数组维度：{data.ndim}")
+#         print(f"数据类型：{data.dtype}")
+        
+#         # 显示完整数组内容（不截断）
+#         print(f"\n完整数组内容：")
+        
+#         # 方法1：设置numpy打印选项显示全部内容
+#         np.set_printoptions(threshold=np.inf, linewidth=200)
+#         print(data)
+#         np.set_printoptions(threshold=1000, linewidth=75)  # 恢复默认
+        
+#         # 方法2：逐行打印（更清晰）
+#         print(f"\n逐行显示：")
+#         for row_idx in range(data.shape[0]):
+#             print(f"第{row_idx:3d}行: {data[row_idx]}")
+        
+#         # 方法3：统计信息
+#         print(f"\n统计信息：")
+#         print(f"总元素个数：{data.size}")
+#         unique_values, counts = np.unique(data, return_counts=True)
+#         for value, count in zip(unique_values, counts):
+#             print(f"值 {value}: {count} 个 ({count/data.size:.2%})")
+    
+#     # 针对graph.pkl的特殊处理
+#     elif fname == "graph.pkl" and isinstance(data, nx.Graph):
+#         # 展示所有节点
+#         nodes = list(data.nodes())
+#         print(f"图的节点（nodes）：{nodes}")
+#         # 展示所有边
+#         edges = list(data.edges())
+#         print(f"图的边（edges）：{edges}")
+#         # 展示节点数和边数
+#         print(f"节点数量：{data.number_of_nodes()}")
+#         print(f"边数量：{data.number_of_edges()}")
+        
+#         print("\n正在保存图形到本地...")
+#         plt.figure(figsize=(8, 6))  # 设置画布大小
+#         nx.draw(data, with_labels=True, node_size=500, font_size=10, node_color="lightblue")
+#         plt.title(f"Graph from {fname}")  # 设置标题
+#         plt.savefig(f"graph_visualization.png", dpi=300, bbox_inches="tight")
+#         plt.close()  # 关闭画布，释放内存
+#         print(f"图形已保存为：graph_visualization.png（在当前文件夹中查看）")
+    
+#     # 其他数据类型的展示
+#     elif isinstance(data, (list, tuple)):
+#         print(f"数据长度：{len(data)}")
+#         print(f"数据内容（完整）：")
+#         for idx, item in enumerate(data):
+#             print(f"[{idx}]: {item}")
+    
+#     elif isinstance(data, dict):
+#         print(f"字典长度：{len(data)}")
+#         print(f"字典的键：{list(data.keys())}")
+#         print(f"字典内容（完整）：")
+#         for key, value in data.items():
+#             print(f"  {key}: {value}")
+    
+#     else:
+#         print(f"数据内容：{data}")
+
+
 import pickle
 import os
 import matplotlib.pyplot as plt
@@ -79,8 +182,8 @@ import networkx as nx
 import numpy as np
 
 # 1. 配置路径和文件参数
-data_path = "./data/train_100_100"  # 替换成你的实际数据根目录
-i = 60 # 对应文件夹0（可修改）
+data_path = "./casedata/real_test"  # 替换成你的实际数据根目录
+i = 0# 对应文件夹0（可修改）
 # 定义要读取的四个.pkl文件名
 file_names = [
     "distance_m.pkl",
@@ -127,12 +230,12 @@ for fname, data in all_data.items():
         for row_idx in range(data.shape[0]):
             print(f"第{row_idx:3d}行: {data[row_idx]}")
         
-        # 方法3：统计信息
-        print(f"\n统计信息：")
-        print(f"总元素个数：{data.size}")
-        unique_values, counts = np.unique(data, return_counts=True)
-        for value, count in zip(unique_values, counts):
-            print(f"值 {value}: {count} 个 ({count/data.size:.2%})")
+        # # 方法3：统计信息
+        # print(f"\n统计信息：")
+        # print(f"总元素个数：{data.size}")
+        # unique_values, counts = np.unique(data, return_counts=True)
+        # for value, count in zip(unique_values, counts):
+        #     print(f"值 {value}: {count} 个 ({count/data.size:.2%})")
     
     # 针对graph.pkl的特殊处理
     elif fname == "graph.pkl" and isinstance(data, nx.Graph):
@@ -154,7 +257,7 @@ for fname, data in all_data.items():
         plt.close()  # 关闭画布，释放内存
         print(f"图形已保存为：graph_visualization.png（在当前文件夹中查看）")
     
-    # 其他数据类型的展示
+    # 其他数据类型的展示（列表/元组）
     elif isinstance(data, (list, tuple)):
         print(f"数据长度：{len(data)}")
         print(f"数据内容（完整）：")
@@ -170,3 +273,31 @@ for fname, data in all_data.items():
     
     else:
         print(f"数据内容：{data}")
+    
+    # ===================== 新增：统计tabu_table.pkl中0的个数 =====================
+    if fname == "tabu_table.pkl":
+        print(f"\n---------- tabu_table 中值为 0 的元素统计 ----------")
+        total_zero = 0
+        total_elements = 0
+        
+        # 情况1：tabu_table是numpy数组（最常见）
+        if isinstance(data, np.ndarray):
+            total_zero = np.sum(data == 0)  # 统计0的个数
+            total_elements = data.size       # 总元素数
+        
+        # 情况2：tabu_table是二维列表
+        elif isinstance(data, list) and all(isinstance(row, list) for row in data):
+            total_zero = sum(row.count(0) for row in data)  # 每行统计0再累加
+            total_elements = sum(len(row) for row in data)  # 总元素数
+        
+        # 情况3：其他格式（降级处理）
+        else:
+            print("⚠️  警告：tabu_table 不是二维列表/numpy数组，无法统计0的个数")
+        
+        # 输出统计结果（仅当能统计时）
+        if total_elements > 0:
+            zero_ratio = (total_zero / total_elements) * 100
+            print(f"值为 0 的元素个数：{total_zero}")
+            print(f"总元素个数：{total_elements}")
+            print(f"0 占比：{zero_ratio:.2f}%")
+    # =============================================================================

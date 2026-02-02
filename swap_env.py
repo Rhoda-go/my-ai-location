@@ -5,7 +5,9 @@ import torch_geometric.data as geom_data
 
 from dataset import GraphImpDataset
 from utils import DensitySampling
+from utils import AlphaSampling 
 from utils import TabuDensitySampling
+from utils import TabuAlphaSampling
 
 class SwapEnv:
     def __init__(
@@ -13,7 +15,7 @@ class SwapEnv:
         data_path,
         episode_len=40,
     ):
-        self._dataset = GraphImpDataset(data_path=data_path, fac_range="range(5, 11)")
+        self._dataset = GraphImpDataset(data_path=data_path, fac_range="range(5,31,5)")
         self._index_iter = iter(range(len(self._dataset)))
         self._index = None
         self._steps = None
@@ -36,7 +38,11 @@ class SwapEnv:
         self.mask = None
 
     def _get_fac_data(self):
-        wdist = self.alpha* torch.exp(-self.beta * self.distance_m[self.facility_list]) * self.city_pop
+        #wdist = self.alpha* torch.exp(-self.beta * self.distance_m[self.facility_list]) * self.city_pop
+        wdist = (self.alpha[self.facility_list].unsqueeze(1) *  # [p, 1]
+                 torch.exp(-self.beta[self.facility_list].unsqueeze(1) * self.distance_m[self.facility_list]) *  # [p, n_nodes]
+                 self.city_pop.unsqueeze(0)  # [1, n_nodes]
+                 )
         #point_indices = torch.argmin(self.distance_m[self.facility_list], 0)
         #node_costs = wdist[point_indices, torch.arange(self.distance_m.shape[1])]
         node_costs = torch.sum(wdist, dim=0)  #facility to all nodes
@@ -128,8 +134,8 @@ class SwapEnv:
         )
 
         self._steps = 0
-        #self.facility_list = DensitySampling(1).sample(self.city_pop, self.p)
-        self.facility_list = TabuDensitySampling(exp=1).sample(self.city_pop, self.p, self.tabu_table)
+        self.facility_list = AlphaSampling(1).sample(self.city_pop, self.p)
+        #self.facility_list = TabuAlphaSampling(exp=1).sample(self.alpha, self.p, self.tabu_table)
         self.mask = torch.ones(self.city_pop.shape[0], dtype=torch.bool)
         self.mask[self.facility_list] = 0
 

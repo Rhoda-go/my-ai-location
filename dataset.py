@@ -7,6 +7,9 @@ import numpy as np
 import torch
 import torch_geometric.data as geom_data
 from torch.utils.data import Dataset
+from utils import TabuDensitySampling
+from utils import TabuAlphaSampling
+from utils import AlphaSampling
 
 
 def preprocess_graph(graph, distance_m):
@@ -31,7 +34,7 @@ def preprocess_graph(graph, distance_m):
 
     edge_attr = edge_attr.reshape(-1, 1) / edge_attr.max()  # [m, 1]
     road_net_data = geom_data.Data(edge_index=edge_index, edge_attr=edge_attr)
-    distance_m = distance_m / distance_m.max()
+    #distance_m = distance_m / distance_m.max()
   
 
 
@@ -121,6 +124,11 @@ class GraphImpDataset(GraphDataset):
             init_facility = np.random.choice(
                 len(self.city_pops[city_id]), size=p, replace=False
             )
+    
+            #init_facility=TabuDensitySampling(exp=1).sample(city_pop[city_id], p, tabu_table[city_id])
+            # init_facility=TabuAlphaSampling(exp=1).sample(alpha, p, tabu_table)
+
+
             pickle.dump(
                 init_facility,
                 open(f"{self.init_dir}/{city_id}_{p}.pkl", "wb"),

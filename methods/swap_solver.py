@@ -1,9 +1,12 @@
 import os
 import pickle
 import time
+import numpy as np
 
 from results import PMPSolution
 from utils import TabuDensitySampling, get_cost
+from utils import TabuAlphaSampling, get_cost
+
 
 
 class SwapSolver:
@@ -19,13 +22,22 @@ class SwapSolver:
         if swap_num is None:
             swap_num = p
         for _ in range(init_num):
-            facility_list = TabuDensitySampling(exp=1).sample(city_pop, p, tabu_table)
+            #tabu_table_min = np.minimum(tabu_table, tabu_table.T) 
+            facility_list = TabuAlphaSampling(exp=1).sample(city_pop, p, tabu_table)
+            #print('facility_list',facility_list)
             sol = self.solve_reloc(
                 city_pop, p, distance_m, facility_list, tabu_table,alpha,beta,reloc_step=swap_num, **kwargs
             )
             if best_sol is None or sol.cost > best_sol.cost:
                 best_sol = sol
+            #     optimal_facility=best_facility
+            # else:
+            #     optimal_facility=facility_list
+            
         best_sol.time = time.time() - start
+        print('best_facility',best_sol.facility_list)
+        print('best_value',best_sol.cost)
+
         return best_sol
 
 
