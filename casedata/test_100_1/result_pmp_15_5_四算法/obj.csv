@@ -1,6 +1,0 @@
-facility number,average,9,10,11
-Gurobi,3.16e+04,3e+04 $\pm$ 0,3.15e+04 $\pm$ 0,3.33e+04 $\pm$ 0
-Greedy-swap,3.06e+04,2.98e+04 $\pm$ 0,3.01e+04 $\pm$ 0,3.19e+04 $\pm$ 0
-Greedy-filter,3.11e+04,3e+04 $\pm$ 0,3.12e+04 $\pm$ 0,3.21e+04 $\pm$ 0
-PPO-swap,3.06e+04,3e+04 $\pm$ 0,3.03e+04 $\pm$ 0,3.16e+04 $\pm$ 0
-PPO-filter,2.72e+04,2.72e+04 $\pm$ 0,2.71e+04 $\pm$ 0,2.73e+04 $\pm$ 0

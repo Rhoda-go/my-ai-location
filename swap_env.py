@@ -15,11 +15,7 @@ class SwapEnv:
         data_path,
         episode_len=40,
     ):
-<<<<<<< HEAD
-        self._dataset = GraphImpDataset(data_path=data_path, fac_range="range(8,12)")
-=======
         self._dataset = GraphImpDataset(data_path=data_path, fac_range="range(5,31,5)")
->>>>>>> lx
         self._index_iter = iter(range(len(self._dataset)))
         self._index = None
         self._steps = None

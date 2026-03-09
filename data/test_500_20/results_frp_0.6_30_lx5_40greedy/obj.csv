@@ -1,0 +1,3 @@
+facility number,average,40
+Gurobi,6.8e+06,6.8e+06 $\pm$ 1.4e+06
+Greedy-reloc,6.53e+06,6.53e+06 $\pm$ 1.38e+06

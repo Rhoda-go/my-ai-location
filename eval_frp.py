@@ -4,18 +4,22 @@ from dataset import GraphImpDataset
 # from methods.random_swap import run_random_swap_reloc
 from methods.greedy import run_greedy_swap_reloc
 from methods.greedy_reloc import run_greedy_reloc
+from methods.random_reloc import run_random_reloc
 from methods.gurobi import run_gurobi_reloc
+from methods.LNS_reloc import run_LNS_reloc
+from methods.ppo_filter import run_ppo_filter_reloc
 from methods.ppo_reloc import run_ppo_reloc
 from methods.swap_solver import run_original
 from results import save_avg, save_frp_results
 from utils import get_config
 
 
+
 def eval_frp(config):
     data_path = config['data_path']   
     reloc_coef = config['reloc_coef']
-    dataset = GraphImpDataset(data_path, "range(15,20)")
-    save_path = f"{data_path}/results_frp_{reloc_coef}_100/"
+    dataset = GraphImpDataset(data_path, "range(9,12)")
+    save_path = f"{data_path}/results_frp_{reloc_coef}_15_lx5_9-12/"
     # dataset = GraphImpDataset(data_path, "range(9,11)")
     # save_path = f"{data_path}/results_frp_{reloc_coef}"
 

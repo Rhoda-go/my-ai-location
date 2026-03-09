@@ -98,5 +98,5 @@ def plot_training_curves(log_dir):
 # 使用示例
 if __name__ == "__main__":
     # 替换为你的日志目录
-    log_dir = "./logs/20260121-155957"  # 或者你的实际日志路径
+    log_dir = "./logs/20260205-113259"  # 或者你的实际日志路径
     data = plot_training_curves(log_dir)

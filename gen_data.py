@@ -10,12 +10,10 @@ import numpy as np
 def gen_gabriel_graph(data_path, seed, n, k1=3, k2=6):
 
     #SCALE_FACTOR = 5.0  # 1×1→10km×10km
-    SCALE_FACTOR = 8.0  # 1×1→10km×10km 100 200 nodes
-<<<<<<< HEAD
+    #SCALE_FACTOR = 8.0  # 1×1→10km×10km 100 200 nodes
     SCALE_FACTOR = 10.0  # 1×1→10km×10km 500 nodes
-=======
-    #SCALE_FACTOR = 10.0  # 1×1→10km×10km 500 nodes
->>>>>>> lx
+    #SCALE_FACTOR = 15.0  # 1×1→10km×10km 1000 nodes
+
 
     class Edge:
         def __init__(self, start, end):
@@ -103,8 +101,25 @@ def gen_gabriel_graph(data_path, seed, n, k1=3, k2=6):
         
     # Generate attraction parameters
     #alpha = np.random.uniform(0, 0.6, n)  # initial basic coefficient
+    '''
+    origin
+    '''
     alpha = np.random.beta(a=1.2, b=8, size=n)
     alpha = np.clip(alpha, 0.015, 0.86)
+
+    beta = np.random.normal(0.32, 0.31, n)  # mean=0.32, std=0.31
+    beta = np.clip(beta, 0.05, 1.80)  # 基于实际最小值和最大值
+
+
+    # '''
+    # new
+    # '''
+    # alpha = np.random.beta(a=1.5, b=6, size=n)
+    # alpha = np.clip(alpha, 0.045, 0.65)
+
+    # beta = np.random.normal(0.25, 0.6, n)  # mean=0.32, std=0.31
+    # beta = np.clip(beta, 0.05, 2)  # 基于实际最小值和最大值
+
     # centrality_normalized = np.array(list(eigenvector_centrality.values())) / max(eigenvector_centrality.values())
     # alpha = alpha * (1+0.2 * centrality_normalized) #alpha bigger in more centralized area
 
@@ -112,6 +127,7 @@ def gen_gabriel_graph(data_path, seed, n, k1=3, k2=6):
     # beta = np.clip(beta, 0.3, 2.2)
     beta = np.random.normal(0.32, 0.31, n)  # mean=0.32, std=0.31
     beta = np.clip(beta, 0.05, 1.80)  # 基于实际最小值和最大值
+
     # pop_normalized = city_pop / city_pop.max()
     # beta = beta * (1 - 0.2 * pop_normalized)  #beta bigger in an area with more population
 
@@ -172,10 +188,7 @@ if __name__ == "__main__":
     # batch_gen("./data/train_300_1000/", 300, 1000)
     # batch_gen("./data/test_300_20/", 300, 20)
     #batch_gen("./data/train_100_999/", 100, 999)
-<<<<<<< HEAD
-    batch_gen("./data/test_500_10/", 500, 10)
-=======
-    batch_gen("./data/train_100_1000/", 100, 1000)
->>>>>>> lx
+    # batch_gen("./data/train_100_1000/", 100, 1000)
+    batch_gen("./data/test_1000_20/", 1000, 20)
 
 

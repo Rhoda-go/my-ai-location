@@ -1,0 +1,4 @@
+facility number,average,,,40,,
+Methods,$Q$ (\%),Gap (%),Time (s),$Q$ (\%),Gap (%),Time (s)
+Gurobi,516.03,0.00,8.92,516.03 $\pm$ 304.51,0.00 $\pm$ 0.00,8.92 $\pm$ 0.35
+Greedy-reloc,490.51,3.97,32.12,490.51 $\pm$ 295.04,3.97 $\pm$ 4.76,32.12 $\pm$ 6.83

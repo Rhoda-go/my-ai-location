@@ -1,0 +1,3 @@
+facility number,average,20
+Gurobi,403.20,403.20 $\pm$ 270.21
+Greedy-reloc,380.68,380.68 $\pm$ 236.28

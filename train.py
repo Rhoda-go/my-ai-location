@@ -8,6 +8,7 @@ from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 
 from model import PPOLightning
+# from model_o import PPOLightning
 from utils import get_config
 
 
@@ -51,5 +52,6 @@ def train_ppo(config):
 
 
 if __name__ == "__main__":
+    # config = get_config(["-c", "config/train_o.yaml"])
     config = get_config(["-c", "config/train.yaml"])
     train_ppo(config)

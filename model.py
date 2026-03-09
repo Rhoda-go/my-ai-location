@@ -30,12 +30,6 @@ def collate_fn_ppo(batch):
     advs = torch.as_tensor(advs, dtype=torch.float).unsqueeze(-1)
     return (new_states, actions, logp_olds, v_olds, qvals, advs)
 
-<<<<<<< HEAD
-
-
-class GraphFeatureExtractor(nn.Module):
-    def __init__(self, c_in, c_hidden, c_out, num_layers=2, layer_name="GCN", **kwargs):
-=======
 class HierarchicalGraph(nn.Module):
     """
     门控、残差、归一化
@@ -126,7 +120,6 @@ class HierarchicalGraph(nn.Module):
 
 class GraphFeatureExtractor(nn.Module):
     def __init__(self, c_in, c_hidden, c_out, num_layers=2,num_heads=4, layer_name="GCN", **kwargs):
->>>>>>> lx
         super().__init__()
 
         gnn_layer = getattr(geom_nn, layer_name)
@@ -191,11 +184,7 @@ class MLP(nn.Module):
 
 class ActorCritic(nn.Module):
     def __init__(
-<<<<<<< HEAD
-        self, fac_c_in, c_hidden, c_out, num_layers, layer_name, **kwargs
-=======
         self, fac_c_in, c_hidden, c_out, num_layers,num_heads, layer_name, **kwargs
->>>>>>> lx
     ) -> None:
         super().__init__()
         '''
@@ -217,18 +206,6 @@ class ActorCritic(nn.Module):
         # if "heads" not in kwargs:
         #     kwargs["heads"] = 1
         # emb_size = c_out * kwargs["heads"] * 2
-<<<<<<< HEAD
-
-        self.actor_gnn = GraphFeatureExtractor(
-            fac_c_in, c_hidden, c_out, num_layers, layer_name, **kwargs
-        )
-        self.actor_prob = MLP(emb_size, c_hidden, 1, num_layers)
-        self.att = nn.Linear(emb_size, emb_size, bias=False)
-
-        self.critic_gnn = GraphFeatureExtractor(
-            fac_c_in, c_hidden, c_out, num_layers, layer_name, **kwargs
-        )
-=======
         
         self.actor_gnn = HierarchicalGraph(
             fac_c_in, c_hidden, c_out, num_layers, num_heads, layer_name, **kwargs
@@ -248,7 +225,6 @@ class ActorCritic(nn.Module):
         # self.critic_gnn = GraphFeatureExtractor(
             # fac_c_in, c_hidden, c_out, num_layers, layer_name, **kwargs
         # )
->>>>>>> lx
         self.critic = MLP(emb_size, c_hidden, 1, num_layers)
 
     def actor_forward(self, state, action1=None):
@@ -285,38 +261,6 @@ class ActorCritic(nn.Module):
         '''
         filtered by tabu_table
         '''
-<<<<<<< HEAD
-        mask_tabu = (tabu_table == 1)  # [batch, nodes, nodes]
-        mask2 = mask.clone()  # [batch, nodes]
-        
-        batch_size = mask2.shape[0]
-        
-        for i in range(batch_size):
-            sample_mask = mask2[i]  # [nodes]
-            candidate_indices = torch.where(sample_mask == 0)[0] # candidate_indices for batch i（where mask=0）
-
-            for idx in candidate_indices:
-                tabu_row = mask_tabu[i, idx]  # [nodes]
-                sample_mask = sample_mask & tabu_row #true&true=true，true&false=false
-            
-            # update
-            mask2[i] = sample_mask
-                
-        logits_mask = torch.where(mask2, 0, -float("inf"))
-        logits2 = act_scores2 + logits_mask
-        pi2 = Categorical(logits=logits2)
-        action2 = pi2.sample()
-
-        logits = torch.stack([logits1, logits2], dim=1).squeeze(0)
-        action = torch.stack([action1, action2], dim=1).squeeze(0)
-        return Categorical(logits=logits), action
-
-        # '''
-        # original
-        # '''
-        # mask2 = torch.where(mask, 0, -float("inf"))
-        # logits2 = act_scores2 + mask2
-=======
         # mask_tabu = (tabu_table == 1)  # [batch, nodes, nodes]
         # mask2 = mask.clone()  # [batch, nodes]
         
@@ -335,7 +279,6 @@ class ActorCritic(nn.Module):
                 
         # logits_mask = torch.where(mask2, 0, -float("inf"))
         # logits2 = act_scores2 + logits_mask
->>>>>>> lx
         # pi2 = Categorical(logits=logits2)
         # action2 = pi2.sample()
 
@@ -343,8 +286,6 @@ class ActorCritic(nn.Module):
         # action = torch.stack([action1, action2], dim=1).squeeze(0)
         # return Categorical(logits=logits), action
 
-<<<<<<< HEAD
-=======
         # '''
         # original
         # '''
@@ -357,7 +298,6 @@ class ActorCritic(nn.Module):
         action = torch.stack([action1, action2], dim=1).squeeze(0)
         return Categorical(logits=logits), action
 
->>>>>>> lx
     def critic_forward(self, state):
         batch_fac = state["fac_data"]
         emb_fac = self.critic_gnn(

@@ -1,0 +1,5 @@
+facility number,average,,30,
+Methods,Gap (%),Time (s),Gap (%),Time (s)
+Gurobi,0.00,11.65,0.00 $\pm$ 0.00,11.65 $\pm$ 0.72
+LNS,6.27,3.86,6.27 $\pm$ 6.58,3.86 $\pm$ 0.65
+PPO-swap,5.50,5.66,5.50 $\pm$ 5.86,5.66 $\pm$ 2.77

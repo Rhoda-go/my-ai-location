@@ -85,13 +85,8 @@ class GurobiSolver:
         
         runtime=time.time()-gurobi_start
 
-<<<<<<< HEAD
-        print('facility_list',facility_list)
-        print('optimal value',m.objVal)
-=======
         # print('facility_list',facility_list)
         # print('optimal value',m.objVal)
->>>>>>> lx
 
 
         sol = PMPSolution(
@@ -178,11 +173,7 @@ class GurobiSolver:
                     )
                     tabu_count += 1
 
-<<<<<<< HEAD
-        print(f"Added {tabu_count} tabu constraints")
-=======
         # print(f"Added {tabu_count} tabu constraints")
->>>>>>> lx
 
         # 目标函数
         m.setObjective(assign.prod(coverage_profit), GRB.MAXIMIZE)
@@ -197,15 +188,9 @@ class GurobiSolver:
         # 提取解
         facility_list = [f for f in facilities if select[f].X > 0.5]
         
-<<<<<<< HEAD
-        print("Current facility:", current_facility_list)
-        print("Optimal facility:", facility_list)
-        print("Best value:", m.ObjVal)
-=======
         # print("Current facility:", current_facility_list)
         # print("Optimal facility:", facility_list)
         # print("Best value:", m.ObjVal)
->>>>>>> lx
         
         # 统计换出的设施
         swapped_out = [f for f in current_facility_list if f not in facility_list]
@@ -220,13 +205,8 @@ class GurobiSolver:
                     continue
                 condition1 = alpha[k] > alpha[i] * torch.exp(beta[k] * distance_m[k, i])
                 condition2 = beta[k] <= beta[i]
-<<<<<<< HEAD
-                if condition1 and condition2:
-                    print(f"⚠️ Warning: Swapped-in facility {i} is dominated by {k}")
-=======
                 # if condition1 and condition2:
                 #     print(f"⚠️ Warning: Swapped-in facility {i} is dominated by {k}")
->>>>>>> lx
 
         runtime = time.time() - gurobi_start
 

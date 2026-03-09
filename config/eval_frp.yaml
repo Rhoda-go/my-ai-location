@@ -1,11 +1,11 @@
-iter_num: &iter_num 100
+iter_num: &iter_num 15      #100:15 200:20 500:30 1000:60
 device: &device cuda:0
-reloc_coef: 0.5
+reloc_coef: 0.6
 
-data_path: ./data/test_500_10/
-#data_path: ./data/test_1000_20/
-#data_path: ./data/test_30_1/
-#data_path: ./casedata/test_100_1/
+# data_path: ./data/test_200_20/
+#data_path: ./data/test_500_20/
+# data_path: ./data/test_1000_20/
+data_path: ./casedata/test_100_1/
 
 
 methods:
@@ -13,39 +13,39 @@ methods:
     run_fn: run_gurobi_reloc
     OutputFlag: 0
     MIPGap: 0
+ 
+  LNS-reloc:
+    run_fn: run_LNS_reloc
+    iter_num: *iter_num
 
+  Random-reloc:
+      run_fn: run_random_reloc
+      iter_num: *iter_num
+
+      
   Greedy-reloc:
     run_fn: run_greedy_reloc
     iter_num:  *iter_num
-
-  # Greedy-filter:
-  #   run_fn: run_greedy_filter_reloc
-  #   init_num: *iter_num
-
 
 
   PPO-swap:
     run_fn: run_ppo_reloc
     iter_num: *iter_num
 
-<<<<<<< HEAD
-    ckpt: ./logs/20260124-154826/checkpoints/epoch=286-step=4592.ckpt
-=======
-   # ckpt: ./logs/20260122-223736/checkpoints/epoch=173-step=2784.ckpt #ppo
-    ckpt: ./logs/20260131-134620/checkpoints/epoch=284-step=4560.ckpt #ppo_lx
->>>>>>> lx
+    ckpt: ./logs/20260202-094055/checkpoints/epoch=274-step=4400.ckpt #ppo_lx5
+    # ckpt: ./logs/20260205-112948/checkpoints/epoch=253-step=4064.ckpt #ppo6
+    # ckpt: ./logs/20260205-113259/checkpoints/epoch=100-step=1616.ckpt #lx6
+
     name: ppo_swap_test
     device: *device
 
   # PPO-filter:
   #   run_fn: run_ppo_filter_reloc
   #   iter_num: *iter_num
+    
+    # #ckpt: ./logs/20260202-094055/checkpoints/epoch=274-step=4400.ckpt #ppo_lx5
+    # ckpt: ./logs/20260205-112948/checkpoints/epoch=253-step=4064.ckpt #ppo6
+    # #ckpt: ./logs/20260205-113259/checkpoints/epoch=100-step=1616.ckpt #lx6
 
-<<<<<<< HEAD
-  #   ckpt: ./logs/20260124-154826/checkpoints/epoch=286-step=4592.ckpt
-=======
-  #  # ckpt: ./logs/20260122-223736/checkpoints/epoch=173-step=2784.ckpt #ppo
-  #   ckpt: ./logs/20260130-223033/checkpoints/epoch=235-step=3776.ckpt #ppo_lx
->>>>>>> lx
   #   name: ppo_swap_test
   #   device: *device

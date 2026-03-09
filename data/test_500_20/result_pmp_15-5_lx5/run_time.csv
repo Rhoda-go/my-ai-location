@@ -1,0 +1,4 @@
+facility number,average,30
+Gurobi,11.65,11.65 $\pm$ 0.72
+LNS,3.86,3.86 $\pm$ 0.65
+PPO-swap,5.66,5.66 $\pm$ 2.77
