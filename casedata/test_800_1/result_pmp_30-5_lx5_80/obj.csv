@@ -1,0 +1,7 @@
+facility number,average,80
+Gurobi,5.07e+07,5.07e+07 $\pm$ 0
+GA,4.55e+07,4.55e+07 $\pm$ 0
+LNS,3.7e+07,3.7e+07 $\pm$ 0
+Random-swap,2.08e+07,2.08e+07 $\pm$ 0
+Greedy-filter,3.7e+07,3.7e+07 $\pm$ 0
+PPO-swap,3.7e+07,3.7e+07 $\pm$ 0

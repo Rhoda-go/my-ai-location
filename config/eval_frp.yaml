@@ -2,9 +2,11 @@ iter_num: &iter_num 15      #100:15 200:20 500:30 1000:60
 device: &device cuda:0
 reloc_coef: 0.6
 
-# data_path: ./data/test_200_20/
+#data_path: ./data/test_200_20/
 #data_path: ./data/test_500_20/
 # data_path: ./data/test_1000_20/
+#data_path: ./data/testA2+B2_500_2/
+#data_path: ./data/testA2+B1_500_20/
 data_path: ./casedata/test_100_1/
 
 
@@ -14,18 +16,18 @@ methods:
     OutputFlag: 0
     MIPGap: 0
  
-  LNS-reloc:
-    run_fn: run_LNS_reloc
-    iter_num: *iter_num
+  # LNS-reloc:
+  #   run_fn: run_LNS_reloc
+  #   iter_num: *iter_num
 
-  Random-reloc:
-      run_fn: run_random_reloc
-      iter_num: *iter_num
+  # Random-reloc:
+  #     run_fn: run_random_reloc
+  #     iter_num: *iter_num
 
       
-  Greedy-reloc:
-    run_fn: run_greedy_reloc
-    iter_num:  *iter_num
+  # Greedy-reloc:
+  #   run_fn: run_greedy_reloc
+  #   iter_num:  *iter_num
 
 
   PPO-swap:

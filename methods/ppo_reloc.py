@@ -20,14 +20,41 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 # 将项目根目录加入sys.path
 sys.path.append(project_root)
 
+
+def _resolve_torch_device(device):
+    """Resolve runtime device and gracefully fall back to CPU when CUDA is unavailable."""
+    req_device = device if isinstance(device, torch.device) else torch.device(device)
+    if req_device.type != "cuda":
+        return req_device
+
+    if not torch.cuda.is_available():
+        print(f"[PPOReloc] CUDA unavailable, fallback to CPU (requested: {req_device}).")
+        return torch.device("cpu")
+
+    if req_device.index is not None and req_device.index >= torch.cuda.device_count():
+        print(
+            f"[PPOReloc] Invalid CUDA index {req_device.index}, "
+            f"fallback to cuda:0 (available count={torch.cuda.device_count()})."
+        )
+        return torch.device("cuda:0")
+
+    return req_device
+
 class PPOSwapSolver(SwapSolver):
     def __init__(self, iter_num, ckpt, device):
         super().__init__(iter_num)
+        self.device = _resolve_torch_device(device)
         #self.model = torch.load(ckpt, map_location=device)
         self.model = (
-            PPOLightning.load_from_checkpoint(ckpt, mode="test", weights_only=True ).float().to(device)
+            PPOLightning.load_from_checkpoint(
+                ckpt,
+                mode="test",
+                map_location=self.device,
+                weights_only=True,
+            )
+            .float()
+            .to(self.device)
         )
-        self.device = device
         #self.warm_up()
 
     def warm_up(self):

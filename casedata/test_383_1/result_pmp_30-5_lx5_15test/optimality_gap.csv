@@ -1,0 +1,5 @@
+facility number,average,15
+Gurobi,0.00,0.00 $\pm$ 0.00
+Random-swap,42.33,42.33 $\pm$ 0.00
+Greedy-filter,7.67,7.67 $\pm$ 0.00
+PPO-swap,7.67,7.67 $\pm$ 0.00

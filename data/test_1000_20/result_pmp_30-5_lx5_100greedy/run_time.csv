@@ -1,0 +1,3 @@
+facility number,average,100
+Gurobi,42.75,42.75 $\pm$ 0.50
+Greedy-filter,16626.52,16626.52 $\pm$ 4323.87

@@ -7,11 +7,11 @@ device: &device cuda:0
 
 #data_path: ./data/testnewpara_100_20/
 data_path: ./casedata/test_100_1/
-#data_path: ./data/test_500_20/
+#data_path: ./data/testA2+B2_500_20/
 #data_path: ./data/test_200_20/
 #data_path: ./data/test_500_20/
 #data_path: ./data/test_1000_20/
-#data_path: ./casedata/test_100_1/
+#data_path: ./casedata/test_1000_1/
 
 methods:
   Gurobi:
@@ -19,42 +19,42 @@ methods:
     OutputFlag: 0
     MIPGap: 0
 
-  GA:
-    run_fn: run_ga
-    init_num: *init_num
-    iter_num: *iter_num
-    swap_num: *swap_num
+  # GA:
+  #   run_fn: run_ga
+  #   init_num: *init_num
+  #   iter_num: *iter_num
+  #   swap_num: *swap_num
 
-  LNS:
-    run_fn: run_LNS
-    init_num: *init_num
-    iter_num: *iter_num
-    swap_num: *swap_num
+  # LNS:
+  #   run_fn: run_LNS
+  #   init_num: *init_num
+  #   iter_num: *iter_num
+  #   swap_num: *swap_num
 
-  Random-swap:
-    run_fn: run_random
-    init_num: *init_num
-    iter_num: *iter_num
-    swap_num: *swap_num
+  # Random-swap:
+  #   run_fn: run_random
+  #   init_num: *init_num
+  #   iter_num: *iter_num
+  #   swap_num: *swap_num
 
   Greedy-filter:
     run_fn: run_greedy_filter
     init_num: *init_num
     swap_num: *swap_num
 
-  PPO-swap:
-    run_fn: run_ppo_swap
-    init_num: *init_num
-    iter_num: *iter_num
-    swap_num: *swap_num
+  # PPO-swap:
+  #   run_fn: run_ppo_swap
+  #   init_num: *init_num
+  #   iter_num: *iter_num
+  #   swap_num: *swap_num
 
   
-    ckpt: ./logs/20260202-094055/checkpoints/epoch=274-step=4400.ckpt #ppo_lx5
-    # ckpt: ./logs/20260205-112948/checkpoints/epoch=253-step=4064.ckpt #ppo6
-    # ckpt: ./logs/20260205-113259/checkpoints/epoch=100-step=1616.ckpt #lx6
+  #   ckpt: ./logs/20260202-094055/checkpoints/epoch=274-step=4400.ckpt #ppo_lx5
+  #   # ckpt: ./logs/20260205-112948/checkpoints/epoch=253-step=4064.ckpt #ppo6
+  #   # ckpt: ./logs/20260205-113259/checkpoints/epoch=100-step=1616.ckpt #lx6
 
-    name: ppo_swap_test
-    device: *device
+  #   name: ppo_swap_test
+  #   device: *device
 
   # PPO-filter:
   #   run_fn: run_ppo_filter

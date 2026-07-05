@@ -1,0 +1,4 @@
+facility number,average,,40,
+Methods,Gap (%),Time (s),Gap (%),Time (s)
+Gurobi,0.00,10.65,0.00 $\pm$ 0.00,10.65 $\pm$ 0.21
+Greedy-filter,6.09,10406.20,6.09 $\pm$ 4.90,10406.20 $\pm$ 8729.55

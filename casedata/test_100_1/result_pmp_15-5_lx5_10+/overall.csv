@@ -1,0 +1,8 @@
+facility number,average,,10,
+Methods,Gap (%),Time (s),Gap (%),Time (s)
+Gurobi,0.00,0.50,0.00 $\pm$ 0.00,0.50 $\pm$ 0.00
+GA,2.60,0.31,2.60 $\pm$ 0.00,0.31 $\pm$ 0.00
+LNS,1.06,0.22,1.06 $\pm$ 0.00,0.22 $\pm$ 0.00
+Random-swap,35.17,0.05,35.17 $\pm$ 0.00,0.05 $\pm$ 0.00
+Greedy-filter,1.06,1.82,1.06 $\pm$ 0.00,1.82 $\pm$ 0.00
+PPO-swap,1.06,0.77,1.06 $\pm$ 0.00,0.77 $\pm$ 0.00

@@ -1,0 +1,3 @@
+facility number,average,20
+Gurobi,4.5e+06,4.5e+06 $\pm$ 7.95e+05
+PPO-swap,4.28e+06,4.28e+06 $\pm$ 7.55e+05

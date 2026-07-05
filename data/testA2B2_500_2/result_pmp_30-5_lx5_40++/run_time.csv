@@ -1,0 +1,6 @@
+facility number,average,40
+Gurobi,10.47,10.47 $\pm$ 0.06
+GA,28.46,28.46 $\pm$ 0.05
+LNS,5.19,5.19 $\pm$ 0.04
+Random-swap,1.04,1.04 $\pm$ 0.03
+PPO-swap,4.47,4.47 $\pm$ 0.01

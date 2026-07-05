@@ -57,18 +57,18 @@ class GurobiSolver:
         #     ),
         #     name="Demand",
         # )
-        tabu_count=0
-        for i in facilities:
-            for k in facilities:
+        # tabu_count=0
+        # for i in facilities:
+        #     for k in facilities:
     
-                # condition1: α_k > α_i * exp(β_k * d_ik)
-                condition1 = alpha[k] > alpha[i] * np.exp(beta[k] * distance_m[k, i])
-                # condition2: β_k ≤ β_i
-                condition2 = beta[k] <= beta[i]
+        #         # condition1: α_k > α_i * exp(β_k * d_ik)
+        #         condition1 = alpha[k] > alpha[i] * np.exp(beta[k] * distance_m[k, i])
+        #         # condition2: β_k ≤ β_i
+        #         condition2 = beta[k] <= beta[i]
 
-                if condition1 and condition2:
-                    tabu_count+=1                 
-                    m.addConstr(select[i] + select[k] <= 1, name=f"Tabu_{i}_{k}")
+        #         if condition1 and condition2:
+        #             tabu_count+=1                 
+        #             m.addConstr(select[i] + select[k] <= 1, name=f"Tabu_{i}_{k}")
 
         m.setObjective(assign.prod(coverage_profit), GRB.MAXIMIZE)
 
@@ -85,7 +85,7 @@ class GurobiSolver:
         
         runtime=time.time()-gurobi_start
 
-        # print('facility_list',facility_list)
+        print('facility_list',facility_list)
         # print('optimal value',m.objVal)
 
 
@@ -150,28 +150,28 @@ class GurobiSolver:
         )
 
         # 禁忌约束：换入的设施不能被任何选中的设施支配
-        tabu_count = 0
-        for i in facilities:
-            if i in current_facility_set:
-                continue  # i 在当前解中，不是换入的设施，跳过
+        # tabu_count = 0
+        # for i in facilities:
+        #     if i in current_facility_set:
+        #         continue  # i 在当前解中，不是换入的设施，跳过
             
-            for k in facilities:
-                if i == k:
-                    continue
+        #     for k in facilities:
+        #         if i == k:
+        #             continue
                 
-                # 检查 k 是否支配 i
-                condition1 = alpha[k] > alpha[i] * torch.exp(beta[k] * distance_m[k, i])
-                condition2 = beta[k] <= beta[i]
+        #         # 检查 k 是否支配 i
+        #         condition1 = alpha[k] > alpha[i] * torch.exp(beta[k] * distance_m[k, i])
+        #         condition2 = beta[k] <= beta[i]
 
-                if condition1 and condition2:
-                    # 如果 k 支配 i，则：
-                    # - 如果 i 被换入（swap_in[i]=1），则 k 不能被选中（select[k]=0）
-                    # 等价于：swap_in[i] + select[k] <= 1
-                    m.addConstr(
-                        swap_in[i] + select[k] <= 1,
-                        name=f"Tabu_{k}_dominates_swapin_{i}"
-                    )
-                    tabu_count += 1
+        #         if condition1 and condition2:
+        #             # 如果 k 支配 i，则：
+        #             # - 如果 i 被换入（swap_in[i]=1），则 k 不能被选中（select[k]=0）
+        #             # 等价于：swap_in[i] + select[k] <= 1
+        #             m.addConstr(
+        #                 swap_in[i] + select[k] <= 1,
+        #                 name=f"Tabu_{k}_dominates_swapin_{i}"
+        #             )
+        #             tabu_count += 1
 
         # print(f"Added {tabu_count} tabu constraints")
 
@@ -189,7 +189,7 @@ class GurobiSolver:
         facility_list = [f for f in facilities if select[f].X > 0.5]
         
         # print("Current facility:", current_facility_list)
-        # print("Optimal facility:", facility_list)
+        print("Optimal facility:", facility_list)
         # print("Best value:", m.ObjVal)
         
         # 统计换出的设施

@@ -182,14 +182,14 @@ import networkx as nx
 import numpy as np
 
 # 1. 配置路径和文件参数
-data_path = "./casedata/test_100_1"  # 替换成你的实际数据根目录
+data_path = "./casedata/test_394_1"  # 替换成你的实际数据根目录
 i = 0# 对应文件夹0（可修改）
 # 定义要读取的四个.pkl文件名
 file_names = [
-    "distance_m.pkl",
+    # "distance_m.pkl",
     "attraction_params.pkl",
     "graph.pkl",
-    "tabu_table.pkl"
+    # "tabu_table.pkl"
 ]
 
 # 2. 批量读取文件并存储数据
@@ -242,9 +242,15 @@ for fname, data in all_data.items():
         # 展示所有节点
         nodes = list(data.nodes())
         print(f"图的节点（nodes）：{nodes}")
+        print("节点属性（全部）：")
+        for node, attrs in data.nodes(data=True):
+            if attrs:
+                print(f"  节点 {node}: {attrs}")
+            else:
+                print(f"  节点 {node}: <无属性>")
         # 展示所有边
         edges = list(data.edges())
-        print(f"图的边（edges）：{edges}")
+        # print(f"图的边（edges）：{edges}")
         # 展示节点数和边数
         print(f"节点数量：{data.number_of_nodes()}")
         print(f"边数量：{data.number_of_edges()}")

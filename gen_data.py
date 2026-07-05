@@ -102,13 +102,42 @@ def gen_gabriel_graph(data_path, seed, n, k1=3, k2=6):
     # Generate attraction parameters
     #alpha = np.random.uniform(0, 0.6, n)  # initial basic coefficient
     '''
-    origin
+    origin A1+B1
     '''
-    alpha = np.random.beta(a=1.2, b=8, size=n)
+    # alpha = np.random.beta(a=1.2, b=8, size=n)
+    # alpha = np.clip(alpha, 0.015, 0.86)
+
+    # beta = np.random.normal(0.32, 0.31, n)  # mean=0.32, std=0.31
+    # beta = np.clip(beta, 0.05, 1.80)  # 基于实际最小值和最大值
+
+
+    '''
+    origin A2+B2
+    '''
+    # alpha = np.random.beta(a=2.0, b=5.0, size=n)
+    # alpha = np.clip(alpha, 0.015, 0.86)
+
+    # beta = np.random.normal(0.25, 0.20, n)  # mean=0.25, std=0.20
+    # beta = np.clip(beta, 0.05, 1.80)
+
+    '''
+    origin A1+B2
+    '''
+    # alpha = np.random.beta(a=1.2, b=8, size=n)
+    # alpha = np.clip(alpha, 0.015, 0.86)
+
+    # beta = np.random.normal(0.25, 0.20, n)  # mean=0.25, std=0.20
+    # beta = np.clip(beta, 0.05, 1.80)
+
+    '''
+    origin A2+B1
+    '''
+    alpha = np.random.beta(a=2.0, b=5.0, size=n)
     alpha = np.clip(alpha, 0.015, 0.86)
 
     beta = np.random.normal(0.32, 0.31, n)  # mean=0.32, std=0.31
     beta = np.clip(beta, 0.05, 1.80)  # 基于实际最小值和最大值
+
 
 
     # '''
@@ -125,8 +154,8 @@ def gen_gabriel_graph(data_path, seed, n, k1=3, k2=6):
 
     # beta = np.random.normal(1.5, 0.6, n)  # initial decay coefficient
     # beta = np.clip(beta, 0.3, 2.2)
-    beta = np.random.normal(0.32, 0.31, n)  # mean=0.32, std=0.31
-    beta = np.clip(beta, 0.05, 1.80)  # 基于实际最小值和最大值
+    # beta = np.random.normal(0.32, 0.31, n)  # mean=0.32, std=0.31
+    # beta = np.clip(beta, 0.05, 1.80)  # 基于实际最小值和最大值
 
     # pop_normalized = city_pop / city_pop.max()
     # beta = beta * (1 - 0.2 * pop_normalized)  #beta bigger in an area with more population
@@ -189,6 +218,6 @@ if __name__ == "__main__":
     # batch_gen("./data/test_300_20/", 300, 20)
     #batch_gen("./data/train_100_999/", 100, 999)
     # batch_gen("./data/train_100_1000/", 100, 1000)
-    batch_gen("./data/test_1000_20/", 1000, 20)
+    batch_gen("./data/testA2+B1_500_20/", 500, 20)
 
 

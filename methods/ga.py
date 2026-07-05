@@ -88,6 +88,7 @@ class GASolver(SwapSolver):
             )
 
         best_sol.time = time.time() - start
+        print('best_facility', best_sol.facility_list)
         return best_sol
 
     def _crossover(self, p1, p2, p, n_nodes):

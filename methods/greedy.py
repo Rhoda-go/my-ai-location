@@ -85,8 +85,8 @@ class GreedySwapSolver(SwapSolver):
             swaps.append(best_action)
         best_sol = PMPSolution(facility_list, time.time() - start, max_cost)
         best_sol.swaps = swaps
-        print('best_facility',best_sol.facility_list)
-        print(best_sol.cost)
+        # print('best_facility',best_sol.facility_list)
+        # print(best_sol.cost)
         return best_sol
 
 

@@ -1,0 +1,3 @@
+facility number,average,40
+Gurobi,10.86,10.86 $\pm$ 0.10
+PPO-swap,13.16,13.16 $\pm$ 4.60

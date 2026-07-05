@@ -17,8 +17,8 @@ from utils import get_config
 
 def run_pmp_graph(config):
     data_path = config['data_path']
-    dataset = GraphDataset(data_path, "range(9,12)")
-    save_path = f"{data_path}/result_pmp_15-5_lx5_9-12/"
+    dataset = GraphDataset(data_path, "range(10,11)")
+    save_path = f"{data_path}/result_pmp_15-5_lx5_10no/"
     # dataset = GraphDataset(data_path, "range(8,10)")
     # save_path = f"{data_path}/result_pmp8-10_先预测再过滤/"
 

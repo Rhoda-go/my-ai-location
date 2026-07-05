@@ -1,0 +1,6 @@
+facility number,average,40
+Gurobi,0.00,0.00 $\pm$ 0.00
+LNS-reloc,12.09,12.09 $\pm$ 0.27
+Random-reloc,79.66,79.66 $\pm$ 3.46
+Greedy-reloc,1.14,1.14 $\pm$ 1.14
+PPO-swap,11.26,11.26 $\pm$ 0.86

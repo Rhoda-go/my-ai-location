@@ -20,7 +20,7 @@ class GreedySwapSolver(SwapSolver):
         mask = np.ones(city_pop.numel(), dtype=bool)
         mask[facility_list] = 0
         swaps = []
-        print('reloc_step', reloc_step)
+        # print('reloc_step', reloc_step)
 
         tabu_table_min = np.minimum(tabu_table, tabu_table.T)
         mask_tabu = (tabu_table == 1)  # 弱禁忌表
@@ -32,7 +32,7 @@ class GreedySwapSolver(SwapSolver):
             # ========== 阶段1：检测并处理冲突 ==========
 
             if len(conflict_set) > 0:
-                print(f"Step {step}: 检测到冲突设施 {conflict_set}")
+                # print(f"Step {step}: 检测到冲突设施 {conflict_set}")
                 
                 # 将 facility_list 转换为可以标记 -1 的数组
                 facility_list_temp = facility_list.copy()
@@ -50,7 +50,7 @@ class GreedySwapSolver(SwapSolver):
                             facility_list_temp[idx[0]] = -1  # 使用-1标记
                             mask[conflict_fac] = True
                             current_facilities.discard(conflict_fac)
-                            print(f"  删除冲突设施 {conflict_fac}")
+                            #print(f"  删除冲突设施 {conflict_fac}")
                         
                         # 步骤2：立即为这个空位选择替换设施
                         # 筛选不冲突点位
@@ -86,17 +86,18 @@ class GreedySwapSolver(SwapSolver):
                             
                             # 更新 current_facilities，以便下一个冲突设施的过滤
                             current_facilities.add(selected_facility)
-                            print(f"  替换为设施 {selected_facility}")
+                            #print(f"  替换为设施 {selected_facility}")
                         else:
                             # 无可用设施，跳过（保持-1）
-                            print(f"  ⚠️ 警告: 无可用设施替换 {conflict_fac}")
-                
+                            #print(f"  ⚠️ 警告: 无可用设施替换 {conflict_fac}")
+                            continue
                 # 更新 facility_list（移除所有 -1）
                 facility_list = facility_list_temp[facility_list_temp >= 0]
                 
                 # 如果设施数量不足 p，说明有不可行的情况
                 if len(facility_list) < p:
-                    print(f"  ⚠️ 警告: 冲突处理后设施数量不足 ({len(facility_list)} < {p})，尝试补充")
+                    continue
+                    #print(f"  ⚠️ 警告: 冲突处理后设施数量不足 ({len(facility_list)} < {p})，尝试补充")
 
             
             #阶段二：贪心选择最优换入换出

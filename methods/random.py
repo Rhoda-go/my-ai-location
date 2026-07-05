@@ -114,6 +114,7 @@ class RandomSwapSolver(SwapSolver):
             best_sol = PMPSolution(facility_list, np.nan, get_cost(facility_list, distance_m, city_pop, alpha, beta))
 
         best_sol.time = time.time() - start
+        print('best_facility', best_sol.facility_list)
         return best_sol
 
 
